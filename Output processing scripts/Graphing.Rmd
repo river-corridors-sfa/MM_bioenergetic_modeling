@@ -1,0 +1,1585 @@
+---
+title: "Graphing"
+author: "Jianqiu Zheng"
+date: "2/21/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(ggpubr)
+library(scales)
+library(MASS) # to access Animals data sets
+library(ggallin)
+library(dplyr)
+library(readr)
+library(tidyr)
+library(stringr)
+library(ggpmisc)
+theme_pubr()
+```
+
+#delG of electron donor half reaction
+```{R edonor}
+peat<-read.csv("mineral_Oxy_ctrl.csv")
+acid<-read.csv("mineral_Oxy_1uM.csv")
+mineral<-read.csv("mineral_Oxy_1000uM.csv")
+
+peat1<-as.data.frame(matrix(ncol=2, nrow=nrow(peat)))
+peat1$V1<-c("DS")
+peat1$V2<-peat$delGcat
+colnames(peat1) <- c('Amendment', 'delGd')
+
+
+acid1<-as.data.frame(matrix(ncol=2, nrow=nrow(acid)))
+acid1$V1<-c("eCS")
+acid1$V2<-peat$delGcat
+colnames(acid1) <- c('Amendment', 'delGd')
+
+miner1<-as.data.frame(matrix(ncol=2, nrow=nrow(mineral)))
+miner1$V1<-c("M")
+miner1$V2<-peat$delGcat
+colnames(miner1) <- c('Amendment', 'delGd')
+
+
+combined<-rbind(peat1, acid1, miner1)
+
+#density distribution plot
+plot1<-ggplot(data=combined, aes(x=delGd))+ 
+  #geom_histogram(aes(y=..density..,color=Amendment, fill=Amendment),binwidth=40,alpha=0.2, position="identity")+ 
+  geom_density(aes(color=Amendment), size=1)+
+  scale_x_continuous(limits=c(-6000,0))+
+  scale_y_continuous(limits=c(0, 3e-3),breaks=seq(0,3e-3, by=1e-3))+
+  scale_fill_manual(values = c("#E7B800","#0073C2FF", "#FC4E07","#00AFBB")) +
+  scale_color_manual(values = c("#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+
+  theme_pubr(border=TRUE)+theme(legend.position=c(0.12,0.75))+  theme(panel.grid.minor.x=element_line(linetype="dashed", color="gray",size=0.2))+
+  theme(panel.grid.major.x=element_line(linetype="dashed", color="gray",size=0.2))
+## blue, red, yellow:  "#0073C2FF", "#FC4E07","#E7B800"
+plot1
+
+pdf("amendment_delGd_boxpH.pdf", width=6, height=3)
+plot1
+dev.off() 
+
+#violin plot
+plot3 <-ggplot(data=combined, aes(Amendment, delGd, fill=Amendment))+ 
+  geom_violin(trim=FALSE, draw_quantiles=c(0.25, 0.5, 0.75), alpha=0.5)+ 
+  scale_fill_manual(values = c("#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+theme_pubr(border=TRUE)+theme(legend.position="right")
+pdf("Amend_delGd_violinpH.pdf", width=4.1, height=3)
+plot3
+dev.off() 
+
+```
+
+
+
+###concentration correction for deltaG
+```{R edonor}
+ctrl<-read.csv("mineral_me_ctrl.csv")
+conc1<-read.csv("mineral_me_1uM.csv")
+conc2<-read.csv("mineral_me_10uM.csv")
+conc3<-read.csv("mineral_me_100uM.csv")
+conc4<-read.csv("mineral_me_1000uM.csv")
+
+
+var1<-as.data.frame(matrix(ncol=2, nrow=nrow(ctrl)))
+var1$V1<-c("1 uM")
+var1$V2<-((conc1$delGcat-ctrl$delGcat)/ctrl$delGcat)
+colnames(var1)<-c("conc","value")
+
+var2<-as.data.frame(matrix(ncol=2, nrow=nrow(ctrl)))
+var2$V1<-c("10 uM")
+var2$V2<-((conc2$delGcat-ctrl$delGcat)/ctrl$delGcat)
+colnames(var2)<-c("conc","value")
+
+var3<-as.data.frame(matrix(ncol=2, nrow=nrow(ctrl)))
+var3$V1<-c("100 uM")
+var3$V2<-((conc3$delGcat-ctrl$delGcat)/ctrl$delGcat)
+colnames(var3)<-c("conc","value")
+
+var4<-as.data.frame(matrix(ncol=2, nrow=nrow(ctrl)))
+var4$V1<-c("1000 uM")
+var4$V2<-((conc4$delGcat-ctrl$delGcat)/ctrl$delGcat)
+colnames(var4)<-c("conc","value")
+
+
+
+final<-rbind(var1, var2, var3, var4)
+
+#density distribution plot
+plot1<-ggplot(data=final, aes(x=value))+ 
+  geom_histogram(aes(y=..density..,color=conc, fill=conc),binwidth=0.002,alpha=0.4, position="identity")+ 
+  scale_x_continuous(limits=c(0,1), labels=scales::percent)+
+  scale_y_continuous(limits=c(0,100))+
+  scale_fill_manual(values = c("#d0d1e6","#a6bddb", "#74a9cf","#045a8d")) +
+  scale_color_manual(values = c("#d0d1e6","#a6bddb", "#74a9cf","#045a8d"))+
+  theme_pubr(border=TRUE)+ theme(panel.grid.minor.x=element_line(linetype="dashed", color="gray",size=0.2))+
+  theme(panel.grid.major.x=element_line(linetype="dashed", color="gray",size=0.2))+theme(legend.position="right")+
+  labs(title="CH4")
+## blue, red, yellow:  "#0073C2FF", "#FC4E07","#E7B800"
+plot1
+
+pdf("delG_me_conc.pdf", width=6, height=3)
+plot1
+dev.off() 
+
+
+
+```
+
+
+
+#rate distribution
+```{R edonor}
+
+peat<-read.csv("peat1_out_Oxy_pH.csv")
+peatDS<-read.csv("peat1_out_Fe_pH.csv")
+peatCS<-read.csv("peat1_out_S_pH.csv")
+peatM<-read.csv("peat1_out_CH4_pH.csv")  #measured at 0.5 days
+
+##control
+peat1<-as.data.frame(matrix(ncol=2, nrow=nrow(peat)))
+peat1$V1<-c("1Oxy")
+peat1$V2<-peat$delGcat
+colnames(peat1) <- c('Treatment', 'delGd')
+
+#peat + DS
+peatDS1<-as.data.frame(matrix(ncol=2, nrow=nrow(peatDS)))
+peatDS1$V1<-c("2Fe")
+peatDS1$V2<-peatDS$delGcat
+colnames(peatDS1) <- c('Treatment', 'delGd')
+
+#peat + CS
+peatCS1<-as.data.frame(matrix(ncol=2, nrow=nrow(peatCS)))
+peatCS1$V1<-c("3SR")
+peatCS1$V2<-peatCS$delGcat
+colnames(peatCS1) <- c('Treatment', 'delGd')
+
+#peat + M
+peatM1<-as.data.frame(matrix(ncol=2, nrow=nrow(peatM)))
+peatM1$V1<-c("4Me")
+peatM1$V2<-peatM$delGcat
+colnames(peatM1) <- c('Treatment', 'delGd')
+
+combined=rbind(peat1, peatDS1, peatCS1, peatM1)
+combined$soil<-c("peat")
+peatall<-combined
+
+combined<-rbind( mineral, peatall)
+
+trtlab<-c('mineral'="Mineral",'peat'="Peaty")
+#density distribution plot
+plot1<-ggplot(data=combined, aes(x=delGd, fill=Treatment))+ 
+  #geom_histogram(aes(y=..density..,color=Treatment, fill=Treatment),binwidth=0.01,alpha=0.2, position="identity")+ 
+  geom_density(alpha=0.4)+
+  scale_x_continuous(trans=pseudolog10_trans, limits=c(-2*10^4, -10^1),breaks=c(-10^4,-10^3, -10^2)) +
+  facet_grid(soil ~.,labeller=labeller(soil=trtlab))+
+  #scale_y_continuous(limits=c(0, 3e-3),breaks=seq(0,3e-3, by=1e-3))+
+  scale_fill_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB")) +
+  scale_color_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+
+  theme_pubr(border=TRUE)+theme(legend.position="right")+
+  theme(panel.grid.minor.x=element_line(linetype="dashed", color="gray",size=0.2))+
+  theme(panel.grid.major.x=element_line(linetype="dashed", color="gray",size=0.2))
+## blue, red, yellow:  "#0073C2FF", "#FC4E07","#E7B800"
+plot1
+
+## blue, red, yellow:  "#0073C2FF", "#FC4E07","#E7B800"
+plot1
+
+pdf("peat_rate.pdf", width=6, height=3)
+plot1
+dev.off() 
+
+#violin plot
+plot3 <-ggplot(data=combined, aes(Amendment, delGd, fill=Amendment))+ 
+  geom_violin(trim=FALSE, draw_quantiles=c(0.25, 0.5, 0.75), alpha=0.5)+ 
+  scale_fill_manual(values = c("#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+theme_pubr(border=TRUE)+theme(legend.position="right")
+pdf("Amend_delGd_violinpH.pdf", width=4.1, height=3)
+plot3
+dev.off() 
+
+```
+
+
+##pH adjustment
+```{R edonor}
+
+neutral<-read.csv("acidDS_out_Oxy_pHorg.csv")
+org<-read.csv("acidDS_out_Oxy_pH.csv") #pH adjusted to original
+
+neu<-as.data.frame(matrix(ncol=2, nrow=nrow(neutral)))
+neu$V1<-c("pH=7")
+neu$V2<-neutral$delGd
+colnames(neu) <- c('soil', 'delGd')
+
+pha<-as.data.frame(matrix(ncol=2, nrow=nrow(org)))
+pha$V1<-c("org")
+pha$V2<-org$delGd
+colnames(pha) <- c('soil', 'delGd')
+
+soils<-rbind(neu, pha)
+
+
+#violin plot
+plot3 <-ggplot(data=soils, aes(soil, delGd, fill=soil))+ 
+  geom_violin(trim=FALSE, draw_quantiles=c(0.25, 0.5, 0.75), alpha=0.5)+ 
+  scale_fill_manual(values = c("#FC4E07","#868686FF","#FC4E07"))+theme_pubr(border=TRUE)+theme(legend.position="right")
+pdf("ame_manure_delGd_pHv.pdf", width=4, height=3)
+plot3
+dev.off() 
+
+```
+
+
+##Soil mixing with amendments (take peat as the example)
+#delG of electron donor half reaction
+
+
+```{R edonor}
+
+#combining data
+peat<-read.csv("acid1.csv")
+DS<-read.csv("ame_charred.csv")
+peatDS<-rbind(peat, DS)
+write.csv(peatDS, 'acidCS.csv')
+# followed by thermodynamic cal
+
+
+peat<-read.csv("mineral1_out_Oxy_pH.csv")
+peatDS<-read.csv("mineralDS_out_Oxy_pH.csv")
+peatCS<-read.csv("mineralCS_out_Oxy_pH.csv")
+peatM<-read.csv("mineralM_out_Oxy_pH.csv")  #measured at 0.5 days
+
+##control
+peat1<-as.data.frame(matrix(ncol=2, nrow=nrow(peat)))
+peat1$V1<-c("Ctrl")
+peat1$V2<-peat$delGd
+colnames(peat1) <- c('Treatment', 'delGd')
+
+#peat + DS
+peatDS1<-as.data.frame(matrix(ncol=2, nrow=nrow(peatDS)))
+peatDS1$V1<-c("Min_aDS")
+peatDS1$V2<-peatDS$delGd
+colnames(peatDS1) <- c('Treatment', 'delGd')
+
+#peat + CS
+peatCS1<-as.data.frame(matrix(ncol=2, nrow=nrow(peatCS)))
+peatCS1$V1<-c("Min_CS")
+peatCS1$V2<-peatCS$delGd
+colnames(peatCS1) <- c('Treatment', 'delGd')
+
+#peat + M
+peatM1<-as.data.frame(matrix(ncol=2, nrow=nrow(peatM)))
+peatM1$V1<-c("Min_M")
+peatM1$V2<-peatM$delGd
+colnames(peatM1) <- c('Treatment', 'delGd')
+
+
+combined=rbind(peat1, peatDS1, peatCS1, peatM1)
+
+#density distribution plot
+plot1<-ggplot(data=combined, aes(x=delGd))+ 
+  geom_histogram(aes(y=..density..,color=Treatment, fill=Treatment),binwidth=40,alpha=0.2, position="identity")+ 
+  #geom_density(aes(color=soil), size=1)+
+  scale_x_continuous(limits=c(-3000,0))+
+  scale_y_continuous(limits=c(0, 3e-3),breaks=seq(0,3e-3, by=1e-3))+
+  scale_fill_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB")) +
+  scale_color_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+
+  theme_pubr(border=TRUE)+theme(legend.position=c(0.12,0.75))
+## blue, red, yellow:  "#0073C2FF", "#FC4E07","#E7B800"
+#pdf("amendment_delGd_boxpH.pdf", width=6, height=3)
+#plot1
+#dev.off() 
+
+#violin plot
+plot3 <-ggplot(data=combined, aes(Treatment, delGd, fill=Treatment))+ 
+  geom_violin(trim=FALSE, draw_quantiles=c(0.25, 0.5, 0.75), alpha=0.5)+ 
+  scale_y_continuous(labels = label_number(scale = 1/1000))+
+  scale_fill_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+theme_pubr(border=TRUE)+theme(legend.position="right")
+
+pdf("mineral_amt_delGd_violinpH.pdf", width=4.2, height=3)
+plot3
+dev.off() 
+
+```
+
+#capturing pH effect on treatments
+```{R edonor}
+
+soil<-read.csv("acid1_out_Oxy_pH.csv")
+soilDSorg<-read.csv("acidDS_out_Oxy_pHorg.csv")
+soilDS<-read.csv("acidDS_out_Oxy_pH.csv")
+soilCSorg<-read.csv("acidCS_out_Oxy_pHorg.csv")
+soilCS<-read.csv("acidCS_out_Oxy_pH.csv")
+soilMorg<-read.csv("acidM_out_Oxy_pHorg.csv")
+soilM<-read.csv("acidM_out_Oxy_pH.csv")  #measured at 0.5 days
+
+##control
+trt1<-as.data.frame(matrix(ncol=2, nrow=nrow(soil)))
+trt1$V1<-c("1Ctrl")
+trt1$V2<-soil$delGd/1000
+colnames(trt1) <- c('Treatment', 'delGd')
+
+#soil + DS at original ph
+trt2<-as.data.frame(matrix(ncol=2, nrow=nrow(soilDSorg)))
+trt2$V1<-c("2DSorg")
+trt2$V2<-soilDSorg$delGd/1000
+colnames(trt2) <- c('Treatment', 'delGd')
+
+#soil + DS at new ph
+trt3<-as.data.frame(matrix(ncol=2, nrow=nrow(soilDS)))
+trt3$V1<-c("3DS")
+trt3$V2<-soilDS$delGd/1000
+colnames(trt3) <- c('Treatment', 'delGd')
+
+#soil + CS at original ph
+trt4<-as.data.frame(matrix(ncol=2, nrow=nrow(soilCSorg)))
+trt4$V1<-c("4CSorg")
+trt4$V2<-soilCSorg$delGd/1000
+colnames(trt4) <- c('Treatment', 'delGd')
+
+#soil + CS at new ph
+trt5<-as.data.frame(matrix(ncol=2, nrow=nrow(soilCS)))
+trt5$V1<-c("5CS")
+trt5$V2<-soilCS$delGd/1000
+colnames(trt5) <- c('Treatment', 'delGd')
+
+
+#soil + M at original ph
+trt6<-as.data.frame(matrix(ncol=2, nrow=nrow(soilMorg)))
+trt6$V1<-c("6Morg")
+trt6$V2<-soilMorg$delGd/1000
+colnames(trt6) <- c('Treatment', 'delGd')
+
+#soil + M at new ph
+trt7<-as.data.frame(matrix(ncol=2, nrow=nrow(soilM)))
+trt7$V1<-c("7M")
+trt7$V2<-soilM$delGd/1000
+colnames(trt7) <- c('Treatment', 'delGd')
+
+combined=rbind(trt1, trt2, trt3, trt4, trt5, trt6, trt7)
+
+#Our transformation function
+scaleFUN <- function(x) sprintf("%.1f", x)
+
+#violin plot
+plot3 <-ggplot(data=combined, aes(Treatment, delGd, fill=Treatment, linetype=Treatment, alpha=Treatment))+   geom_violin(trim=FALSE, draw_quantiles=c(0.25, 0.5, 0.75))+ 
+  scale_y_continuous(labels = scaleFUN, limits=c(-1.7,0))+
+  scale_fill_manual(values = c("#868686FF","#E7B800","#E7B800","#0073C2FF","#0073C2FF", "#FC4E07", "#FC4E07"))+
+  scale_linetype_manual(values = c("solid","dashed","solid","dashed","solid","dashed","solid"))+
+  scale_alpha_manual(values=c(0.6,0.3,0.6,0.3,0.6,0.3,0.6))+
+  theme_pubr(border=TRUE)+theme(legend.position="right")
+
+pdf("acid_amt_delGd_violinpH_comp.pdf", width=4.2, height=3)
+plot3
+dev.off() 
+
+```
+
+
+###Catbolic energy
+##log-scale x axis
+```{R energy}
+
+library(MASS) # to access Animals data sets
+library(scales) # to access break formatting functions
+library(ggplot2)
+library(ggallin)
+
+peat<-read.csv("peat1_out_Oxy_pH.csv")
+peatN<-read.csv("peat1_out_N_pH.csv")
+peatDS<-read.csv("peat1_out_Fe_pH.csv")
+peatCS<-read.csv("peat1_out_S_pH.csv")
+peatM<-read.csv("peat1_out_CH4_pH.csv")  #measured at 0.5 days
+
+##control
+peat1<-as.data.frame(matrix(ncol=2, nrow=nrow(peat)))
+peat1$V1<-c("1O2")
+peat1$V2<-peat$delGcat
+colnames(peat1) <- c('Treatment', 'delGcat')
+
+##control
+peat2<-as.data.frame(matrix(ncol=2, nrow=nrow(peatN)))
+peat2$V1<-c("2Nat")
+peat2$V2<-peatN$delGcat
+colnames(peat2) <- c('Treatment', 'delGcat')
+
+
+#peat + DS
+peatDS1<-as.data.frame(matrix(ncol=2, nrow=nrow(peatDS)))
+peatDS1$V1<-c("3Fe")
+peatDS1$V2<-peatDS$delGcat
+colnames(peatDS1) <- c('Treatment', 'delGcat')
+
+#peat + CS
+peatCS1<-as.data.frame(matrix(ncol=2, nrow=nrow(peatCS)))
+peatCS1$V1<-c("4S")
+peatCS1$V2<-peatCS$delGcat
+colnames(peatCS1) <- c('Treatment', 'delGcat')
+
+#peat + M
+peatM1<-as.data.frame(matrix(ncol=2, nrow=nrow(peatM)))
+peatM1$V1<-c("5CH4")
+peatM1$V2<-peatM$delGcat
+colnames(peatM1) <- c('Treatment', 'delGcat')
+
+
+combined=rbind(peat1,peat2, peatDS1, peatCS1, peatM1)
+
+#density distribution plot
+plot1<-ggplot(data=combined, aes(x=delGcat))+ 
+  geom_histogram(aes(y=..density..,color=Treatment, fill=Treatment),binwidth=0.02,alpha=0.2, position="identity")+ scale_x_continuous(trans=pseudolog10_trans, breaks=c(-10^4,-10^3,-10^2,0), limits=c(-10^4.2, -10^1.8))+scale_y_continuous(limits=c(0,5))+
+  #geom_density(aes(color=soil), size=1)+
+  #scale_x_continuous(limits=c(0, 0.4))+
+  #scale_y_continuous(limits=c(0, 0.004),breaks=seq(0,0.004, by=0.001))+
+  scale_fill_manual(values = c("#868686FF","#69b3a2","#E7B800","#0073C2FF", "#FC4E07")) +
+  scale_color_manual(values = c("#868686FF","#69b3a2","#E7B800","#0073C2FF", "#FC4E07"))+
+  theme_pubr(border=TRUE)+theme(legend.position="right")
+plot1
+## blue, red, yellow:  "#0073C2FF", "#FC4E07","#E7B800"
+
+pdf("peatN_delGcat_boxpH.pdf", width=7, height=3)
+plot1
+dev.off() 
+
+#violin plot
+plot3 <-ggplot(data=combined, aes(Treatment, delGcat, fill=Treatment))+ 
+  geom_violin(trim=FALSE, draw_quantiles=c(0.25, 0.5, 0.75), alpha=0.5)+scale_y_continuous(trans=pseudolog10_trans, breaks=c(-10^4,-10^3,-10^2,0)) +
+  scale_fill_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+theme_pubr(border=TRUE)+theme(legend.position="right")
+pdf("acid_delGcat_violinpH.pdf", width=4.5, height=3)
+plot3
+dev.off() 
+
+
+
+
+```
+
+
+
+###Catbolic energy 
+##adding different treatment
+##log-scale x axis
+```{R energy}
+
+library(MASS) # to access Animals data sets
+library(scales) # to access break formatting functions
+library(ggplot2)
+library(ggallin)
+
+peatC1<-read.csv("peat1_out_Oxy_pH.csv")
+peatC2<-read.csv("peat1_out_Fe_pH.csv")
+peatC3<-read.csv("peat1_out_S_pH.csv")
+peatC4<-read.csv("peat1_out_CH4_pH.csv")
+
+peatDS1<-read.csv("peatDS_out_Oxy_pH.csv")
+peatDS2<-read.csv("peatDS_out_Fe_pH.csv")
+peatDS3<-read.csv("peatDS_out_S_pH.csv")
+peatDS4<-read.csv("peatDS_out_CH4_pH.csv")
+
+
+peatCS1<-read.csv("peatCS_out_Oxy_pH.csv")
+peatCS2<-read.csv("peatCS_out_Fe_pH.csv")
+peatCS3<-read.csv("peatCS_out_S_pH.csv")
+peatCS4<-read.csv("peatCS_out_CH4_pH.csv")
+
+peatM1<-read.csv("peatM_out_Oxy_pH.csv")  #measured at 0.5 days
+peatM2<-read.csv("peatM_out_Fe_pH.csv")
+peatM3<-read.csv("peatM_out_S_pH.csv")
+peatM4<-read.csv("peatM_out_CH4_pH.csv")
+
+
+##control
+peat1a<-as.data.frame(matrix(ncol=2, nrow=nrow(peatC1)))
+peat1a$V1<-c("Ctrl")
+peat1a$V2<-c("1Oxy")
+peat1a$V3<-peatC1$stoichMet_hco3
+colnames(peat1a) <- c('Treatment', 'ea','delGcat')
+
+peat2a<-as.data.frame(matrix(ncol=2, nrow=nrow(peatC2)))
+peat2a$V1<-c("Ctrl")
+peat2a$V2<-c("2Fe")
+peat2a$V3<-peatC2$stoichMet_hco3
+colnames(peat2a) <- c('Treatment', 'ea','delGcat')
+
+peat3a<-as.data.frame(matrix(ncol=2, nrow=nrow(peatC3)))
+peat3a$V1<-c("Ctrl")
+peat3a$V2<-c("3S")
+peat3a$V3<-peatC3$stoichMet_hco3
+colnames(peat3a) <- c('Treatment', 'ea','delGcat')
+
+peat4a<-as.data.frame(matrix(ncol=2, nrow=nrow(peatC4)))
+peat4a$V1<-c("Ctrl")
+peat4a$V2<-c("4CH4")
+peat4a$V3<-peatC4$stoichMet_hco3
+colnames(peat4a) <- c('Treatment', 'ea','delGcat')
+
+
+#peat + DS
+peat1b<-as.data.frame(matrix(ncol=2, nrow=nrow(peatDS1)))
+peat1b$V1<-c("DS")
+peat1b$V2<-c("1Oxy")
+peat1b$V3<-peatDS1$stoichMet_hco3
+colnames(peat1b) <- c('Treatment', 'ea','delGcat')
+
+peat2b<-as.data.frame(matrix(ncol=2, nrow=nrow(peatDS2)))
+peat2b$V1<-c("DS")
+peat2b$V2<-c("2Fe")
+peat2b$V3<-peatDS2$stoichMet_hco3
+colnames(peat2b) <- c('Treatment', 'ea','delGcat')
+
+peat3b<-as.data.frame(matrix(ncol=2, nrow=nrow(peatDS3)))
+peat3b$V1<-c("DS")
+peat3b$V2<-c("3S")
+peat3b$V3<-peatDS3$stoichMet_hco3
+colnames(peat3b) <- c('Treatment', 'ea','delGcat')
+
+peat4b<-as.data.frame(matrix(ncol=2, nrow=nrow(peatDS4)))
+peat4b$V1<-c("DS")
+peat4b$V2<-c("4CH4")
+peat4b$V3<-peatDS4$stoichMet_hco3
+colnames(peat4b) <- c('Treatment', 'ea','delGcat')
+
+
+
+#peat + CS
+peat1c<-as.data.frame(matrix(ncol=2, nrow=nrow(peatCS1)))
+peat1c$V1<-c("ES")
+peat1c$V2<-c("1Oxy")
+peat1c$V3<-peatCS1$stoichMet_hco3
+colnames(peat1c) <- c('Treatment', 'ea','delGcat')
+
+peat2c<-as.data.frame(matrix(ncol=2, nrow=nrow(peatCS2)))
+peat2c$V1<-c("ES")
+peat2c$V2<-c("2Fe")
+peat2c$V3<-peatCS2$stoichMet_hco3
+colnames(peat2c) <- c('Treatment', 'ea','delGcat')
+
+peat3c<-as.data.frame(matrix(ncol=2, nrow=nrow(peatCS3)))
+peat3c$V1<-c("ES")
+peat3c$V2<-c("3S")
+peat3c$V3<-peatCS3$stoichMet_hco3
+colnames(peat3c) <- c('Treatment', 'ea','delGcat')
+
+peat4c<-as.data.frame(matrix(ncol=2, nrow=nrow(peatCS4)))
+peat4c$V1<-c("ES")
+peat4c$V2<-c("4CH4")
+peat4c$V3<-peatCS4$stoichMet_hco3
+colnames(peat4c) <- c('Treatment', 'ea','delGcat')
+
+
+#peat + M
+peat1d<-as.data.frame(matrix(ncol=2, nrow=nrow(peatM1)))
+peat1d$V1<-c("M")
+peat1d$V2<-c("1Oxy")
+peat1d$V3<-peatM1$stoichMet_hco3
+colnames(peat1d) <- c('Treatment', 'ea','delGcat')
+
+peat2d<-as.data.frame(matrix(ncol=2, nrow=nrow(peatM2)))
+peat2d$V1<-c("M")
+peat2d$V2<-c("2Fe")
+peat2d$V3<-peatM2$stoichMet_hco3
+colnames(peat2d) <- c('Treatment', 'ea','delGcat')
+
+peat3d<-as.data.frame(matrix(ncol=2, nrow=nrow(peatM3)))
+peat3d$V1<-c("M")
+peat3d$V2<-c("3S")
+peat3d$V3<-peatM3$stoichMet_hco3
+colnames(peat3d) <- c('Treatment', 'ea','delGcat')
+
+peat4d<-as.data.frame(matrix(ncol=2, nrow=nrow(peatM4)))
+peat4d$V1<-c("M")
+peat4d$V2<-c("4CH4")
+peat4d$V3<-peatM4$stoichMet_hco3
+colnames(peat4d) <- c('Treatment', 'ea','delGcat')
+
+
+combined<-rbind(peat1a, peat2a, peat3a, peat4a,peat1b, peat2b, peat3b, peat4b,peat1c, peat2c, peat3c, peat4c, peat1d, peat2d, peat3d, peat4d)
+
+combined$yoc<-abs(combined$delGcat)
+
+library(dplyr)
+df_sum <- combined %>%
+  group_by(Treatment, ea) %>%
+  summarise(sd=sd(delGcat), 
+            mean=mean(delGcat))
+df_sum
+
+
+#bar plot
+plot1 <-ggplot(data=df_sum, aes(x=Treatment, y=mean, color=ea, fill=ea))+ 
+  geom_col(position= position_dodge(0.9), alpha=0.4) + geom_errorbar (aes(ymin=mean-sd, ymax=mean+sd), data=df_sum, width=0.2, position=position_dodge(0.9))+
+  scale_y_continuous(labels = label_number(scale = 1/1000))+
+#scale_y_continuous(trans=pseudolog10_trans, breaks=c(-10^4,-10^3,-10^2,0)) +
+  scale_color_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+
+  scale_fill_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+
+  theme_pubr(border=TRUE)+theme(legend.position="right")
+
+
+#pdf("mineral_all_Cat.pdf", width=7, height=3)
+#plot3
+#dev.off() 
+
+#violin plot
+trtlab<-c('Ctrl'="Ctrl",'DS'="+DS",'ES'="+CS",'M'="+M")
+plot3 <-ggplot(data=combined, aes(ea, delGcat, fill=ea))+ 
+  geom_violin(adjust=4,trim=FALSE, draw_quantiles=c(0.25, 0.5, 0.75), alpha=0.5)+ #scale_y_continuous(trans=pseudolog10_trans, breaks=c(-10^4,-10^3,-10^2,0)) + 
+  facet_grid(.~ Treatment, labeller=as_labeller(trtlab))+
+  scale_fill_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+theme_pubr(border=TRUE)+theme(legend.position="right")+theme(strip.text=element_text(size=14, face="bold"))
+
+plot3
+
+pdf("peat_dGcat_violin.pdf", width=7.5, height=3)
+plot3
+dev.off() 
+
+
+```
+
+
+
+
+###One soil demonstration for PI meeting (flexible stoichiometry)
+```{R energy}
+
+library(MASS) # to access Animals data sets
+library(scales) # to access break formatting functions
+library(ggplot2)
+library(ggallin)
+
+test3<-read.csv("pHtest_Oxy_7.csv") ##using acidic soil
+test4<-read.csv("pHtest_Fe_7.csv")
+test5<-read.csv("pHtest_S_7.csv")
+test6<-read.csv("pHtest_CH4_7.csv")
+
+##control
+data3<-as.data.frame(matrix(ncol=2, nrow=nrow(test3)))
+data3$V1<-c("pH=3")
+data3$V2<-c("Aero")
+data3$V3<-log10(abs(test3$stoichMet_donor))
+colnames(data3) <- c('Treatment','ea',"yoc")
+
+data4<-as.data.frame(matrix(ncol=2, nrow=nrow(test4)))
+data4$V1<-c("pH=4")
+data4$V2<-c("FeR")
+data4$V3<-log10(abs(test4$stoichMet_donor))
+colnames(data4) <- c('Treatment','ea',"yoc")
+
+data5<-as.data.frame(matrix(ncol=2, nrow=nrow(test5)))
+data5$V1<-c("pH=5")
+data5$V2<-c("SR")
+data5$V3<-log10(abs(test5$stoichMet_donor))
+colnames(data5) <- c('Treatment','ea',"yoc")
+
+data6<-as.data.frame(matrix(ncol=2, nrow=nrow(test6)))
+data6$V1<-c("pH=6")
+data6$V2<-c("xMe")
+data6$V3<-log10(abs(test6$stoichMet_donor))
+colnames(data6) <- c('Treatment','ea',"yoc")
+
+pHtest_Goe<-rbind(data3,data4,data5, data6)
+pHtest_Goe$Treatment<-c("pH=7")
+
+
+#violin plot
+trtlab<-c('pH=3'="pH = 3",'pH=4'="pH = 3.5",'pH=5'="pH = 4",'pH=6'="pH = 4.5",'pH=7'="pH = 5")
+
+plot3 <-ggplot(data=pHtest_Goe, aes(x=yoc, fill=ea))+ 
+  geom_density(alpha=0.4)+
+  #geom_vline(xintercept=c(-6000, -500,-300),linetype="dashed")+
+  scale_x_continuous(limits=c(-1,1), breaks=c(-1,0,1))+
+  #scale_x_continuous(trans=pseudolog10_trans, limits=c(10^-2, 5),breaks=c(10^-2, 10^-1,10^0,10^1)) +
+  #facet_grid(Treatment ~.,labeller=labeller(Treatment=trtlab))+
+  scale_fill_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+theme_pubr(border=TRUE)+
+  theme(legend.position="right")+theme(strip.text=element_text(size=14, face="bold"))+
+  theme(panel.grid.minor.x=element_line(linetype="dashed", color="gray",size=0.2))+
+  theme(panel.grid.major.x=element_line(linetype="dashed", color="gray",size=0.2))
+plot3
+#green for N "#00AFBB",
+#gray "#868686FF",
+#pdf("pHtest_FeMineral.pdf", width=7.5, height=8)
+#plot3
+#dev.off() 
+
+
+```
+
+
+
+###pH test
+```{R energy}
+
+library(MASS) # to access Animals data sets
+library(scales) # to access break formatting functions
+library(ggplot2)
+library(ggallin)
+
+test3<-read.csv("pHtest_Goe_3.csv") ##using acidic soil
+test4<-read.csv("pHtest_Goe_35.csv")
+test5<-read.csv("pHtest_Goe_4.csv")
+test6<-read.csv("pHtest_Goe_45.csv")
+test7<-read.csv("pHtest_Goe_5.csv")
+#test8<-read.csv("pHtest_Goe_8.csv")
+
+
+##control
+data3<-as.data.frame(matrix(ncol=2, nrow=nrow(test3)))
+data3$V1<-c("pH=3")
+data3$V2<-c("Aero")
+data3$V3<-test3$delGcat
+colnames(data3) <- c('Treatment','ea')
+
+data4<-as.data.frame(matrix(ncol=2, nrow=nrow(test3)))
+data4$V1<-c("pH=4")
+data4$V2<-c("Aero")
+data4$V3<-test4$delGcat
+colnames(data4) <- c('Treatment','ea')
+
+data5<-as.data.frame(matrix(ncol=2, nrow=nrow(test3)))
+data5$V1<-c("pH=5")
+data5$V2<-c("Aero")
+data5$V3<-test5$delGcat
+colnames(data5) <- c('Treatment','ea')
+
+data6<-as.data.frame(matrix(ncol=2, nrow=nrow(test3)))
+data6$V1<-c("pH=6")
+data6$V2<-c("Aero")
+data6$V3<-test6$delGcat
+colnames(data6) <- c('Treatment','ea')
+
+data7<-as.data.frame(matrix(ncol=2, nrow=nrow(test3)))
+data7$V1<-c("pH=7")
+data7$V2<-c("Aero")
+data7$V3<-test7$delGcat
+colnames(data7) <- c('Treatment','ea')
+
+#data8<-as.data.frame(matrix(ncol=2, nrow=nrow(test3)))
+#data8$V1<-c("pH=8")
+#data8$V2<-c("Aero")
+#data8$V3<-test8$delGcat
+#colnames(data8) <- c('Treatment','ea')
+
+
+pHtest_Goe<-rbind(data3,data4,data5, data6,data7)
+pHtest_Goe$ea<-c("Goe")
+
+combined<-rbind(pHtest_Goe,pHtest_Fe, pHtest_Mag)
+colnames(combined)<- c('Treatment','ea','delGcat')
+
+#violin plot
+trtlab<-c('pH=3'="pH = 3",'pH=4'="pH = 3.5",'pH=5'="pH = 4",'pH=6'="pH = 4.5",'pH=7'="pH = 5")
+
+plot3 <-ggplot(data=pHtest_Goe, aes(x=delGcat, fill=ea))+ 
+  geom_density(alpha=0.5)+
+  #geom_vline(xintercept=c(-6000, -500,-300),linetype="dashed")+
+  #scale_x_continuous(limits=c(0,5))+
+  scale_x_continuous(trans=pseudolog10_trans, limits=c(-10^4, 10^2),breaks=c(-10^4,-10^2, -10^0)) +
+  facet_grid(Treatment ~.,labeller=labeller(Treatment=trtlab))+
+  scale_fill_manual(values = c("#E7B800","#0073C2FF", "#FC4E07","#00AFBB","red"))+theme_pubr(border=TRUE)+
+  theme(legend.position="right")+theme(strip.text=element_text(size=14, face="bold"))+
+  theme(panel.grid.minor.x=element_line(linetype="dashed", color="gray",size=0.2))+
+  theme(panel.grid.major.x=element_line(linetype="dashed", color="gray",size=0.2))
+plot3
+#green for N "#00AFBB",
+#gray "#868686FF",
+#pdf("pHtest_FeMineral.pdf", width=7.5, height=8)
+#plot3
+#dev.off() 
+
+
+```
+
+#Yoc and CUE relationships
+## add C_number and e transfer number
+```{R reformatting}
+sam1<-read.csv("peatDS_out_Oxy_pH.csv")
+sam2<-read.csv("peatDS_out_Fe_pH.csv")
+sam3<-read.csv("peatDS_out_S_pH.csv")
+sam4<-read.csv("peatDS_out_CH4_pH.csv")
+
+
+MolForm<-read.csv("peatDS.csv") 
+cal_ne<-4*MolForm$C+MolForm$H-3*MolForm$N-2*MolForm$O+5*MolForm$P-2*MolForm$S  ##CHNOPS
+
+sam1$ne<-cal_ne
+sam2$ne<-cal_ne
+sam3$ne<-cal_ne
+sam4$ne<-cal_ne
+sam5$ne<-cal_ne
+
+s1<-as.data.frame(matrix(ncol=2, nrow=nrow(sam1)))
+s1$V1<-c("Peaty")
+s1$V2<-c("1ctrl")
+s1$V3<-c("Aero")
+s1$V4<--log10(-sam1$delGcat)
+s1$V5<-abs(sam1$stoichMet_donor)
+s1$V6<-abs(sam1$stoichMet_acceptor)
+#s1$V7<-abs(sam1$stoichMet_hco3)
+#s1$V8<-abs(sam1$stoichMet_nh4)
+s1$V9<-sam1$lambda
+s1$V10<-sam1$CUE
+s1$V11<-sam1$C_num
+s1$V12<-sam1$ne
+colnames(s1) <- c('soil','trt','ea','delGcat','stoiMd','stoiMa','lambda','CUE',"C_num","ne")
+
+
+s2<-as.data.frame(matrix(ncol=2, nrow=nrow(sam2)))
+s2$V1<-c("Peaty")
+s2$V2<-c("2+DS")
+s2$V3<-c("FeR")
+s2$V4<--log10(-sam2$delGcat)
+s2$V5<-abs(sam2$stoichMet_donor)
+s2$V6<-abs(sam2$stoichMet_acceptor)
+s2$V7<-sam2$lambda
+s2$V8<-sam2$CUE
+s2$V9<-sam2$C_num
+s2$V10<-sam2$ne
+colnames(s2) <- c('soil','trt','ea','delGcat','stoiMd','stoiMa','lambda','CUE',"C_num","ne")
+
+
+s3<-as.data.frame(matrix(ncol=2, nrow=nrow(sam3)))
+s3$V1<-c("Peaty")
+s3$V2<-c("3+CS")
+s3$V3<-c("SR")
+s3$V4<--log10(-sam3$delGcat)
+s3$V5<-abs(sam3$stoichMet_donor)
+s3$V6<-abs(sam3$stoichMet_acceptor)
+s3$V7<-sam3$lambda
+s3$V8<-sam3$CUE
+s3$V9<-sam3$C_num
+s3$V10<-sam3$ne
+colnames(s3) <- c('soil','trt','ea','delGcat','stoiMd','stoiMa','lambda','CUE',"C_num","ne")
+
+s4<-as.data.frame(matrix(ncol=2, nrow=nrow(sam4)))
+s4$V1<-c("Peaty")
+s4$V2<-c("4+M")
+s4$V3<-c("xMe")
+s4$V4<--log10(-sam4$delGcat)
+s4$V5<-abs(sam4$stoichMet_donor)
+s4$V6<-abs(sam4$stoichMet_acceptor)
+s4$V7<-sam4$lambda
+s4$V8<-sam4$CUE
+s4$V9<-sam4$C_num
+s4$V10<-sam4$ne
+colnames(s4) <- c('soil','trt','ea','delGcat','stoiMd','stoiMa','lambda','CUE',"C_num","ne")
+
+
+s5<-as.data.frame(matrix(ncol=2, nrow=nrow(sam5)))
+s5$V1<-c("Peaty")
+s5$V2<-c("4+M")
+s5$V3<-c("Den")
+s5$V4<--log10(-sam5$delGcat)
+s5$V5<-abs(sam5$stoichMet_donor)
+s5$V6<-abs(sam5$stoichMet_acceptor)
+s5$V7<-sam5$lambda
+s5$V8<-sam5$CUE
+s5$V9<-sam5$C_num
+s5$V10<-sam5$ne
+colnames(s5) <- c('soil','trt','ea','delGcat','stoiMd','stoiMa','lambda','CUE',"C_num","ne")
+
+
+combined<-rbind(s1,s5,s2,s3,s4)
+combined$soil<-c("peat")
+combined$trt<-c("DS")
+cleaned<-combined[combined$lambda >=0, ]
+write.csv(cleaned,"peatDS_N_CUE.csv")
+```
+
+
+
+##loading and plotting all data from 3 different soils----------------------------------------------------
+```{r plotting}
+
+sam1<-read.csv("acid_all_para.csv")
+sam2<-read.csv("min_all_para.csv")
+sam3<-read.csv("peat_all_para.csv")
+#sam4<-read.csv("peatM_CUE.csv")
+cleaned<-rbind(sam1, sam2, sam3)
+#write.csv(cleaned, "all_soil_para.csv")
+
+#cleaned<-read.csv("peat_all_para.csv")
+cleaned$y_donor<-1/(cleaned$stoiMd*cleaned$C_num) #per C mol
+cleaned$y_accp<-1/cleaned$stoiMa
+cleaned$mu_exp<-exp(-abs(cleaned$stoiMd/0.5)) ##
+cleaned$mu_exp2<-exp(-abs(cleaned$stoiMa/10)) ##
+cleaned$etrans<-cleaned$ne/cleaned$C_num ##
+cleaned$mu_max<-3/cleaned$etrans  ## negative 
+cleaned$mu_all<-cleaned$mu_max*cleaned$mu_exp*cleaned$mu_exp2
+cleaned$log_l<-log10(cleaned$lambda)
+cleaned$nosc<-4-cleaned$ne/cleaned$C_num
+cleaned$test<-cleaned$delGcat/cleaned$C_num
+com1<-cor.test(cleaned$mu_max, cleaned$y_donor, method=c("pearson"))
+  
+
+
+cleaned<-filter(cleaned,etrans>1)
+cleaned$lab<-c("all")
+#trtlab<-c('acid'="Acidic",'min'="Mineral",'peat'="Peaty")
+trtlab<-c('all'=" ")
+
+scaleFUN <- function(x) sprintf("%.2f", x)
+plot1<-ggplot(data=cleaned, aes(x=C_num, y=mu_all, color=ea))+ 
+geom_point(aes(color=ea, shape=trt), alpha=0.3,size=1.6)+#geom_smooth(method=lm,se=FALSE, color="black")+
+  #scale_x_continuous(limits=c(0,120), breaks=c(0,40,80,120)) +
+  #scale_y_continuous(trans=pseudolog10_trans,limits=c(10^-1,10^1),breaks=c(10^-1,10^0,10^1))+
+  #scale_y_continuous(trans = log10_trans(),breaks = c(10^-1,10^0,10^1),labels = trans_format("log10", math_format(10^.x)), limits=c(10^-2,10^1))+
+  scale_y_continuous(limits=c(0,1))+
+  facet_grid(~lab, labeller=as_labeller(trtlab))+
+  scale_fill_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07")) +
+  scale_color_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07"))+
+  scale_shape_manual(values=c(19,2,6,4))+
+  theme_pubr(border=TRUE)+theme(legend.position="NA")+theme(strip.text=element_text(size=14, face="bold"))
+plot1
+
+pdf("C_rate_oc_vhlarge.pdf", width=3.3, height=3)
+plot1
+dev.off() 
+
+
+```
+
+
+### testing 3d scatter plot
+
+```{r 3dplot}
+library(scatterplot3d)
+library(tidyverse)
+library(RNHANES)
+
+###taking mean stoichiometry information
+sam2<-read.csv("min_all_para.csv")
+new<-sam2 %>%
+  group_by(ea) %>%
+  summarise(across(where(is.numeric), mean))
+
+oc<-seq(0.5, 20, by=0.5)
+ea<-seq(0.5, 20, by=0.5)
+
+test1<-data.frame(matrix(nrow=200))
+test1$oc<-oc
+test1$ea<-ea
+test1$group<-c("Aero")
+test1$stoiMd<-as.numeric(new[1, 5])
+test1$stoiMa<-as.numeric(new[1, 6])
+
+test2<-data.frame(matrix(nrow=200))
+test2$oc<-oc
+test2$ea<-ea
+test2$group<-c("FeR")
+test2$stoiMd<- as.numeric(new[2, 5])
+test2$stoiMa<-as.numeric(new[2, 6])
+
+test3<-data.frame(matrix(nrow=200))
+test3$oc<-oc
+test3$ea<-ea
+test3$group<-c("SR")
+test3$stoiMd<- as.numeric(new[3, 5])
+test3$stoiMa<-as.numeric(new[3, 6])
+
+test4<-data.frame(matrix(nrow=200))
+test4$oc<-oc
+test4$ea<-ea
+test4$group<-c("xMe")
+test4$stoiMd<- as.numeric(new[4, 5])
+test4$stoiMa<-as.numeric(new[4, 6])
+
+cleaned<-rbind(test1, test2, test3, test4)
+cleaned$mu_exp<-exp(-abs(cleaned$stoiMd/cleaned$oc)) 
+cleaned$mu_exp2<-exp(-abs(cleaned$stoiMa/cleaned$ea)) 
+cleaned$mu_all<-3/52.5*cleaned$mu_exp*cleaned$mu_exp2
+
+colors<- c("#868686FF","#E7B800","#0073C2FF", "#FC4E07")
+colors<- colors[as.factor(cleaned$group)]
+ with(cleaned, scatterplot3d(oc,
+                   ea, 
+                   mu_all, color=colors))
+
+
+
+```
+
+
+
+### testing 3d scatter plot
+
+```{r 3dplot}
+library(scatterplot3d)
+library(tidyverse)
+library(RNHANES)
+
+### load data
+sam2<-read.csv("min_all_para.csv")
+vhoc<-seq(0.5, 20, by=0.5)
+vhea<-seq(0.5, 20, by=0.5)
+
+##creating matrix *vector 
+test<- cbind(sam2[rep(1:nrow(sam2), length(vhoc)), ], rep(vhoc, each = nrow(sam2)))
+test_all<-cbind(test[rep(1:nrow(test), length(vhea)), ], rep(vhea, each = nrow(test)))
+
+test_all<- test_all[, -(1:4)]
+colnames(test_all)<-c("ea", "delG","stoiMd","stoiMa","lambda", "CUE","C_num","ne","vhoc","vhea")
+test_all$mu_oc<- exp(-abs(test_all$stoiMd/test_all$vhoc))
+test_all$mu_ea<- exp(-abs(test_all$stoiMa/test_all$vhea))
+test_all$mu_all<-3/test_all$ne*test_all$mu_oc*test_all$mu_ea
+
+colors<- c("#868686FF","#E7B800","#0073C2FF", "#FC4E07")
+colors<- colors[as.factor(test_all$ea)]
+ with(test_all, scatterplot3d(vhoc,
+                   vhea, 
+                   mu_all, color=colors))
+
+
+
+ 
+
+
+df <- data.frame(x = c("a", "b", "q"), 
+                   y = c("c", "d", "r"), 
+                   min = c(2, 5, 3), 
+                   max = c(4,6,7))
+library(tidyverse)
+
+df %>% 
+  rowwise() %>% 
+  transmute(x, y, all = list(seq(min, max))) %>% 
+  unnest_longer(all)
+
+
+```
+
+
+## load all data and play with growth yield trade-off
+```{r plotting}
+
+sam1<-read.csv("acid_all_para.csv")
+sam2<-read.csv("min_all_para.csv")
+sam3<-read.csv("peat_all_para.csv")
+#sam4<-read.csv("peatM_CUE.csv")
+cleaned<-rbind(sam1, sam2, sam3)
+#write.csv(cleaned, "all_soil_para.csv")
+
+#cleaned<-read.csv("peat_all_para.csv")
+cleaned$y_donor<-1/(cleaned$stoiMd*cleaned$C_num) #per C mol
+cleaned$y_accp<-1/cleaned$stoiMa
+cleaned$mu_exp<-exp(-abs(cleaned$stoiMd)) ##
+cleaned$mu_exp2<-exp(-abs(cleaned$stoiMa)) ##
+cleaned$etrans<-cleaned$ne/cleaned$C_num ##
+cleaned$mu_max<-3/cleaned$etrans  ## negative 
+cleaned$mu_all<-cleaned$mu_max*cleaned$mu_exp
+cleaned$log_l<-log10(cleaned$lambda)
+cleaned$nosc<-4-cleaned$ne/cleaned$C_num
+cleaned$test<-cleaned$delGcat/cleaned$C_num
+com1<-cor.test(cleaned$mu_max, cleaned$y_donor, method=c("pearson"))
+  
+
+
+cleaned<-filter(cleaned,etrans>1)
+cleaned$lab<-c("all")
+trtlab<-c('Aero'="Aerobic respiration",'FeR'="Iron reduction",'SR'="Sulfate reduction",'xMe'="Methanogenesis")
+
+test<-filter(cleaned, trt=="ctrl")
+
+scaleFUN <- function(x) sprintf("%.2f", x)
+plot1<-ggplot(data=test, aes(x=mu_all, y=y_donor, color=ea))+ 
+geom_point(aes(color=ea, shape=trt), alpha=0.3,size=1.6)+geom_smooth(method=loess,se=FALSE, color="black")+
+  #scale_x_continuous(limits=c(0,120), breaks=c(0,40,80,120)) +
+  #scale_y_continuous(trans=pseudolog10_trans,limits=c(10^-1,10^1),breaks=c(10^-1,10^0,10^1))+
+  #scale_y_continuous(trans = log10_trans(),breaks = c(10^-1,10^0,10^1),labels = trans_format("log10", math_format(10^.x)), limits=c(10^-2,10^1))+
+   #scale_x_continuous(limits=c(0,25))+
+  facet_wrap(~ea,labeller=as_labeller(trtlab), nrow=2)+
+  scale_fill_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07")) +
+  scale_color_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07"))+
+  scale_shape_manual(values=c(19,2,6,4))+
+  theme_pubr(border=TRUE)+theme(legend.position="NA")+theme(strip.text=element_text(size=14, face="bold"))
+plot1
+
+pdf("tradeoff.pdf", width=6, height=5)
+plot1
+dev.off() 
+
+
+#------------------
+plot1<-ggplot(data=cleaned, aes(x=C_num, y=y_donor, color=ea))+ 
+geom_point(aes(color=ea, shape=trt), alpha=0.3,size=1.6)+#geom_smooth(method=lm,se=FALSE, color="black")+
+  #scale_x_continuous(limits=c(0,120), breaks=c(0,40,80,120)) +
+  #scale_y_continuous(trans=pseudolog10_trans,limits=c(10^-1,10^1),breaks=c(10^-1,10^0,10^1))+
+  #scale_y_continuous(trans = log10_trans(),breaks = c(10^-1,10^0,10^1),labels = trans_format("log10", math_format(10^.x)), limits=c(10^-2,10^1))+
+   #scale_x_continuous(limits=c(0,25))+
+  #facet_wrap(~ea,labeller=as_labeller(trtlab), nrow=2)+
+  scale_fill_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07")) +
+  scale_color_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07"))+
+  scale_shape_manual(values=c(19,2,6,4))+
+  theme_pubr(border=TRUE)+theme(legend.position="NA")+theme(strip.text=element_text(size=14, face="bold"))
+plot1
+
+pdf("yield_C.pdf", width=3.3, height=3)
+plot1
+dev.off() 
+
+
+```
+
+###comparison with pure culture data
+```{r plotting}
+
+sam1<-read.csv("acid_all_para.csv")
+sam2<-read.csv("min_all_para.csv")
+sam3<-read.csv("peat_all_para.csv")
+#sam4<-read.csv("peatM_CUE.csv")
+cleaned<-rbind(sam1, sam2, sam3)
+#write.csv(cleaned, "all_soil_para.csv")
+
+#cleaned<-read.csv("peat_all_para.csv")
+cleaned$y_donor<-1/(cleaned$stoiMd*cleaned$C_num) #per C mol
+cleaned$y_accp<-1/cleaned$stoiMa
+cleaned$mu_exp<-exp(-abs(cleaned$stoiMd)) ##
+cleaned$mu_exp2<-exp(-abs(cleaned$stoiMa)) ##
+cleaned$etrans<-cleaned$ne/cleaned$C_num ##
+cleaned$mu_max<-3/cleaned$etrans  ## negative 
+cleaned$mu_all<-cleaned$mu_max*cleaned$mu_exp
+cleaned$log_l<-log10(cleaned$lambda)
+cleaned$nosc<-4-cleaned$ne/cleaned$C_num
+cleaned$test<-cleaned$delGcat/cleaned$C_num
+com1<-cor.test(cleaned$mu_max, cleaned$y_donor, method=c("pearson"))
+  
+cleaned<-filter(cleaned,etrans>1)
+test<-filter(cleaned, trt=="ctrl")
+new<-test[,c("ea", "y_donor", "mu_all")]
+new$model<-c("model")
+colnames(new)<-c("ea", "yield","rate", "group")
+
+cul<-read.csv("culture_simple.csv")
+cul$group<-c("culture")
+colnames(cul)<-c("ea", "yield","rate", "group")
+cul$grow<-cul$rate/cul$yield
+final<-rbind(new, cul)
+
+  
+  
+trtlab<-c('Aero'="Aerobic respiration",'FeR'="Iron reduction",'SR'="Sulfate reduction",'xMe'="Methanogenesis")
+
+plot1<-ggplot(data=final, aes(x=ea, y=yield, fill=interaction(ea, group), color=ea, alpha=0.4))+ 
+     geom_boxplot(width=0.7)+stat_boxplot(geom='errorbar',width=0.7)+
+     #scale_x_continuous(limits=c(0,120), breaks=c(0,40,80,120)) +
+     #scale_y_continuous(trans=pseudolog10_trans,limits=c(10^-1,10^1),breaks=c(10^-1,10^0,10^1))+
+     #scale_y_continuous(trans = log10_trans(),breaks = c(10^-1,10^0,10^1),labels = trans_format("log10", math_format(10^.x)), limits=c(10^-2,10^1))+
+     #scale_x_continuous(limits=c(0,25))+
+     #facet_wrap(~ea,labeller=as_labeller(trtlab), nrow=2)+
+    scale_fill_manual(values = c("white","white","white","white","#868686FF","#E7B800","#0073C2FF", "#FC4E07")) +
+     scale_color_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07"))+
+
+    theme_pubr(border=TRUE)+theme(legend.position="right")+theme(strip.text=element_text(size=20, face="bold"))
+plot1
+
+pdf("cul_aero4.pdf", width=6, height=4)
+plot1
+dev.off() 
+
+cul1<-filter(cul, ea=="SR")
+
+plot2<-ggplot(data=cul1, aes(x=grow, y=yield, color=ea))+ 
+geom_point(aes(color=ea), alpha=0.7,size=2.5)+geom_smooth(method=lm,se=FALSE, color="black")+
+  #scale_x_continuous(limits=c(0,120), breaks=c(0,40,80,120)) +
+  #scale_y_continuous(trans=pseudolog10_trans,limits=c(10^-1,10^1),breaks=c(10^-1,10^0,10^1))+
+  #scale_y_continuous(trans = log10_trans(),breaks = c(10^-1,10^0,10^1),labels = trans_format("log10", math_format(10^.x)), limits=c(10^-2,10^1))+
+   #scale_x_continuous(limits=c(0,25))+
+  facet_wrap(~ea,labeller=as_labeller(trtlab), nrow=2)+
+  scale_fill_manual(values = c("#0073C2FF","#E7B800","#0073C2FF", "#FC4E07")) +
+  scale_color_manual(values = c("#0073C2FF","#E7B800","#0073C2FF", "#FC4E07"))+
+  scale_shape_manual(values=c(19,2,6,4))+
+  theme_pubr(border=TRUE)+theme(legend.position="NA")+theme(strip.text=element_text(size=16, face="bold"))
+plot2
+
+pdf("cul_DR_tradeoff.pdf", width=3.6, height=3.5)
+plot2
+dev.off() 
+
+
+```
+
+
+
+
+
+
+## load observational data and play with yield box plot
+
+```{r plotting}
+
+sam1<-read.csv("acid_all_para.csv")
+sam2<-read.csv("min_all_para.csv")
+sam3<-read.csv("peat_all_para.csv")
+#sam4<-read.csv("peatM_CUE.csv")
+cleaned<-rbind(sam1, sam2, sam3)
+#write.csv(cleaned, "all_soil_para.csv")
+
+#cleaned<-read.csv("peat_all_para.csv")
+cleaned$y_donor<-1/(cleaned$stoiMd*cleaned$C_num) #per C mol
+cleaned$y_accp<-1/cleaned$stoiMa
+cleaned$mu_exp<-exp(-abs(cleaned$stoiMd)) ##
+cleaned$mu_exp2<-exp(-abs(cleaned$stoiMa)) ##
+cleaned$etrans<-cleaned$ne/cleaned$C_num ##
+cleaned$mu_max<-3/cleaned$etrans  ## negative 
+cleaned$mu_all<-cleaned$mu_max*cleaned$mu_exp
+cleaned$log_l<-log10(cleaned$lambda)
+cleaned$nosc<-4-cleaned$ne/cleaned$C_num
+cleaned$test<-cleaned$mu_all/cleaned$y_donor
+com1<-cor.test(cleaned$mu_max, cleaned$y_donor, method=c("pearson"))
+  
+cleaned<-filter(cleaned,etrans>1)
+test<-filter(cleaned, trt=="ctrl")
+new<-test[,c("ea", "y_donor", "mu_all","test")]
+new$model<-c("model")
+colnames(new)<-c("ea", "yield","rate", "growth","group")
+
+cue<-filter(new, ea=="Aero")
+plot1<-ggplot(data=new, aes(x=growth, y=yield, color=ea))+ 
+geom_point(aes(color=ea), alpha=0.3,size=1.6)+geom_smooth(aes(group=ea, color=ea), method=loess,se=FALSE)+
+  #scale_x_continuous(limits=c(0,120), breaks=c(0,40,80,120)) +
+  #scale_y_continuous(trans=pseudolog10_trans,limits=c(10^-1,10^1),breaks=c(10^-1,10^0,10^1))+
+  #scale_y_continuous(trans = log10_trans(),breaks = c(10^-1,10^0,10^1),labels = trans_format("log10", math_format(10^.x)), limits=c(10^-2,10^1))+
+   #scale_x_continuous(limits=c(0,25))+
+  #facet_wrap(~ea,labeller=as_labeller(trtlab), nrow=2)+
+  scale_fill_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07")) +
+  scale_color_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07"))+
+  scale_shape_manual(values=c(19,2,6,4))+
+  theme_pubr(border=TRUE)+theme(legend.position="NA")+theme(strip.text=element_text(size=20, face="bold"))
+plot1
+
+pdf("tradoff_all.pdf", width=4, height=4)
+plot1
+dev.off() 
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r plotting}
+
+#combining all
+data1<-read.csv("acid_Oxy_CUE.csv")
+data2<-read.csv("acid_Fe_CUE.csv")
+data3<-read.csv("acid_S_CUE.csv")
+data4<-read.csv("acid_CH4_CUE.csv")
+data1$ea<-c("Aero")
+
+data5<-read.csv("mineral_Oxy_CUE.csv")
+data6<-read.csv("mineral_Fe_CUE.csv")
+data7<-read.csv("mineral_S_CUE.csv")
+data8<-read.csv("mineral_CH4_CUE.csv")
+
+
+data9<-read.csv("peat_Oxy_CUE.csv")
+data10<-read.csv("peat_Fe_CUE.csv")
+data11<-read.csv("peat_S_CUE.csv")
+data12<-read.csv("peat_CH4_CUE.csv")
+data9$ea<-c("Aero")
+
+com2<-rbind(data1, data2, data3, data4, data5, data6, data7, data8, data9, data10, data11, data12)
+#com2<-rbind(data5, data6, data7, data8)
+write.csv(com2,"soil_all_CUE.csv")
+
+#plotting
+com2<-read.csv("soil_all_CUE.csv")
+cleaned<-subset(com2, stoiMd<10 &lambda > 0.03 &stoiMa<35)
+
+cleaned$y_donor<-1/(cleaned$stoiMd*cleaned$C_num)
+cleaned$y_accp<-1/cleaned$stoiMa
+cleaned$vmax_ED1<-exp(-abs(cleaned$stoiMd)) ##
+cleaned$vmax_ED2<-exp(-abs(cleaned$stoiMd)) ##
+cleaned$vmax_ED3<-exp(-abs(cleaned$stoiMd)) ##
+
+#cleaned<-subset(cleaned, vmax_ED<500)
+
+
+new<-filter(cleaned, soil=="Mineral" & trt=="1ctrl")
+
+
+trtlab<-c('acid'="Acidic soil",'Mineral'="Mineral soil",'peat'="Peaty soil")
+plot3 <-ggplot(data=new, aes(x=ea, y=y_donor, fill=ea))+ 
+  #geom_violin(trim=TRUE,adjust=1.2, scale= "width", draw_quantiles=c(0.25, 0.5, 0.75), alpha=0.5)+
+  geom_boxplot(alpha=0.5)+
+  scale_y_continuous(trans=pseudolog10_trans, limits=c(0,1)) +
+  #facet_grid(~soil,labeller=as_labeller(trtlab))+
+  scale_fill_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB")) +
+  scale_color_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+
+  scale_shape_manual(values=c(19,2,6,4))+
+  theme_pubr(border=TRUE)+theme(legend.position="right")+theme(strip.text=element_text(size=12, face="bold"))+ scale_x_discrete(labels=c("Aero", "FeR", "SR","Meth"))+ theme(panel.grid.major.y=element_line(NA), panel.grid.minor.y=element_line(NA))
+plot3
+
+pdf("min_ctr_CUE_new.pdf", width=4.2, height=3)
+plot3
+dev.off() 
+
+###raincloud
+library(ggdist)
+ggdist::stat_dots()
+
+
+new<-filter(cleaned, soil=="peat" & trt=="1ctrl")
+
+plot1<-ggplot(data=new, aes(x=ea, y=vmax_ED2, fill=ea))+ 
+  stat_halfeye(adjust=0.5, justification=-0.2, .width=0, point_colour=NA, alpha=0.5)+
+  geom_boxplot(width=0.12,outlier.color= NA, alpha=0.5)+
+  scale_y_continuous(limits=c(0,1)) +
+  labs(y="Proxy rate")+
+  scale_fill_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB")) +
+  scale_color_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+
+  scale_shape_manual(values=c(19,2,6,4))+scale_x_discrete(labels=c("Aero", "FeR", "SR","Meth"))+
+  theme_pubr(border=TRUE)+theme(legend.position="right")+theme(strip.text=element_text(size=14, face="bold"))
+plot1
+
+pdf("min_ctr_rate.pdf", width=4.2, height=3)
+plot1
+dev.off() 
+
+
+plot3 <-ggplot(data=cleaned, aes(x=vmax_EA, fill=ea))+ 
+  geom_density(adjust=0.5,alpha=0.5)+
+  #geom_vline(xintercept=c(-6000, -500,-300),linetype="dashed")+
+  #scale_x_continuous(limits=c(0,5))+
+  scale_y_continuous(trans=pseudolog10_trans, breaks=c(10^-1,10^0,10^1)) +
+  facet_grid(~soil,labeller=labeller(trtlab))+
+  scale_fill_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB","red"))+theme_pubr(border=TRUE)+
+  theme(legend.position="right")+theme(strip.text=element_text(size=14, face="bold"))+
+  theme(panel.grid.minor.x=element_line(linetype="dashed", color="gray",size=0.2))+
+  theme(panel.grid.major.x=element_line(linetype="dashed", color="gray",size=0.2))
+plot3
+
+## blue, red, yellow:  "#0073C2FF", "#FC4E07","#E7B800"
+pdf("vmax_ED2.pdf", width=9, height=3)
+plot1
+dev.off() 
+
+
+#violin plot
+cleaned$logv1<-log10(cleaned$vmax_ED1)
+cleaned$logv2<-log10(cleaned$vmax_ED2)
+cleaned$logv3<-log10(cleaned$vmax_ED3)
+
+
+trtlab<-c('acid'="Acidic soil",'Mineral'="Mineral soil",'peat'="Peaty soil")
+plot3 <-ggplot(data=cleaned, aes(x=ea, y=vmax_ED1, fill=ea))+ 
+  geom_violin(trim=TRUE,adjust=2, scale= "width", draw_quantiles=c(0.25, 0.5, 0.75), alpha=0.5)+
+  scale_y_continuous(trans=pseudolog10_trans, limits=c(0,1)) +
+  #facet_grid(~soil,labeller=as_labeller(trtlab))+
+  scale_fill_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB")) +
+  scale_color_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+
+  scale_shape_manual(values=c(19,2,6,4))+
+  theme_pubr(border=TRUE)+theme(legend.position="right")+theme(strip.text=element_text(size=12, face="bold"))+ scale_x_discrete(labels=c("Aero", "FeR", "SR","Me"))
+plot3
+
+pdf("ED1.pdf", width=4.2, height=3)
+plot3
+dev.off() 
+
+```
+
+##playing with raincloud plots
+```{r plotting}
+
+library(ggdist)
+library(tidyquant)
+library(tidyverse)
+library(ggplot2)
+library(ggforce)
+library(gghalves)
+
+
+soillab<-c('acid'="Acidic",'min'="Mineral",'peat'="Peaty")
+
+plot1<-cleaned %>%
+  ggplot(aes(x=factor(ea), y=vmax_ED1, fill=factor(ea)))+
+  #ggdist::stat_halfeye(adjust=0.5,justification=-.1, .width=0, alpha=0.5,point_color=NA)+  #half violin
+  geom_boxplot(width=.1, outlier.color=NA, alpha=0.5)+
+  scale_x_discrete(labels=c("Aero","FeRe","SRe","Meth"))+
+  #geom_point(size=1,alpha=.3, position=position_jitter(seed=1, width=.2))
+  scale_fill_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB")) +
+  scale_color_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+
+  facet_grid( ~ soil, labeller=labeller( soil=soillab))+
+  theme_pubr(border=TRUE)+theme(legend.position="right")+theme(strip.text=element_text(size=12, face="bold"))+theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+plot1
+
+
+pdf("mu_all_cloud.pdf", width=9.2, height=3)
+plot1
+dev.off() 
+
+
+
+```
+
+
+
+#delGCat, Stoichiometry and CUE
+```{R edonor}
+sam1<-read.csv("mineral1_out_Oxy_pH.csv")  #measured at 0.5 days
+sam2<-read.csv("mineral1_out_Fe_pH.csv")
+sam3<-read.csv("mineral1_out_S_pH.csv")
+sam4<-read.csv("mineral1_out_CH4_pH.csv")
+
+s1<-as.data.frame(matrix(ncol=2, nrow=nrow(sam1)))
+s1$V1<-c("Aero")
+s1$V2<--log10(-sam1$delGcat)
+s1$V3<-abs(sam1$stoichMet_donor)
+s1$V4<-abs(sam1$stoichMet_acceptor)
+s1$V5<-sam1$lambda
+s1$V6<-sam1$CUE
+colnames(s1) <- c('ea','delGcat','stoiMd','stoiMa','lambda','CUE')
+
+
+s2<-as.data.frame(matrix(ncol=2, nrow=nrow(sam2)))
+s2$V1<-c("Fe")
+s2$V2<--log10(-sam2$delGcat)
+s2$V3<-abs(sam2$stoichMet_donor)
+s2$V4<-abs(sam2$stoichMet_acceptor)
+s2$V5<-sam2$lambda
+s2$V6<-sam2$CUE
+colnames(s2) <- c('ea','delGcat','stoiMd','stoiMa','lambda','CUE')
+
+
+s3<-as.data.frame(matrix(ncol=2, nrow=nrow(sam3)))
+s3$V1<-c("S")
+s3$V2<--log10(-sam3$delGcat)
+s3$V3<-abs(sam3$stoichMet_donor)
+s3$V4<-abs(sam3$stoichMet_acceptor)
+s3$V5<-sam3$lambda
+s3$V6<-sam3$CUE
+colnames(s3) <- c('ea','delGcat','stoiMd','stoiMa','lambda','CUE')
+
+s4<-as.data.frame(matrix(ncol=2, nrow=nrow(sam4)))
+s4$V1<-c("xCH4")
+s4$V2<--log10(-sam4$delGcat)
+s4$V3<-abs(sam4$stoichMet_donor)
+s4$V4<-abs(sam4$stoichMet_acceptor)
+s4$V5<-sam4$lambda
+s4$V6<-sam4$CUE
+colnames(s4) <- c('ea','delGcat','stoiMd','stoiMa','lambda','CUE')
+
+combined<-rbind(s1,s2,s3,s4)
+cleaned<-combined[combined$lambda >=0, ]
+# growth yield on donor
+cleaned$y_donor<-1/cleaned$stoiMd
+
+#scatter plot
+plot1<-ggplot(data=cleaned, aes(x=y_donor, y=lambda, color=ea))+ 
+geom_point(alpha=0.6,size=1.6)+
+  scale_x_continuous(trans='log10',breaks=c(10^-2,10^-1, 10^0, 10^1), limits=c(10^-2,10^1))+
+  scale_y_continuous(trans='log10',breaks=c(10^-2,10^-1, 10^0, 10^1), limits=c(10^-2,10^1))+
+  scale_fill_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB")) +
+  scale_color_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+
+  scale_shape_manual(values=c(19,2,6,4))+
+  theme_pubr(border=TRUE)+theme(legend.position="right")+theme(strip.text=element_text(size=14, face="bold"))
+plot1
+
+## blue, red, yellow:  "#0073C2FF", "#FC4E07","#E7B800"
+pdf("mineral_yield_lambda.pdf", width=4.1, height=2.8)
+plot1
+dev.off() 
+
+
+
+
+
+
+library(dplyr)
+df_sum <- combined %>%
+  group_by(ea) %>%
+  summarise(sd=sd(CUE), 
+            mean=mean(CUE))
+df_sum
+write.csv(df_sum,"peat1_CUEbox.csv")
+
+
+
+#density distribution plot
+plot1<-ggplot(data=cleaned, aes(x=delGcat, y=stoiMd))+ 
+  geom_point(aes(color=ea), alpha=0.4,size=1.6)+
+  scale_x_continuous(limits=c(-4,-2),breaks=c(-4, -3, -2))+
+  scale_y_continuous(limits=c(-10,0))+
+  scale_fill_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB")) +
+  scale_color_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+
+  theme_pubr(border=TRUE)+theme(legend.position="right")
+## blue, red, yellow:  "#0073C2FF", "#FC4E07","#E7B800"
+pdf("acidM_stoi.pdf", width=4.2, height=2.8)
+plot1
+dev.off() 
+
+
+
+
+
+#density distribution plot
+plot1<-ggplot(data=combined, aes(x=delGcat, y=CUE))+ 
+  geom_point(aes(color=ea), alpha=0.4,size=1.6)+
+  scale_x_continuous(limits=c(-4,-2),breaks=c(-4, -3,-2))+
+  scale_y_continuous(limits=c(0,0.8))+
+  scale_fill_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB")) +
+  scale_color_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+
+  theme_pubr(border=TRUE)+theme(legend.position="right")
+## blue, red, yellow:  "#0073C2FF", "#FC4E07","#E7B800"
+pdf("acidM_CUE.pdf", width=4, height=2.8)
+plot1
+dev.off() 
+
+
+#violin plot
+plot3 <-ggplot(data=combined, aes(x=ea, y=CUE, fill=ea))+
+                  geom_violin(alpha=0.5)+ 
+     scale_y_continuous(limits=c(0,0.8))+
+  scale_fill_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+
+  theme_pubr(border=TRUE)+theme(legend.position="right")
+plot3
+
+pdf("acidM_CUE_violin.pdf", width=4, height=2.8)
+plot3
+dev.off() 
+
+
+
+sumcue<-read.csv("peat1_CUEbox.csv")
+#bar plot
+plot3 <-ggplot(data=sumcue, aes(x=ea, y=mean, color=trt, fill=trt))+ 
+  geom_col(position= position_dodge(0.9), alpha=0.4) + geom_errorbar (aes(ymin=mean-sd, ymax=mean+sd), data=sumcue, width=0.2, position=position_dodge(0.9))+
+   scale_y_continuous(limits=c(0,0.8))+
+  #scale_y_continuous(labels = label_number(scale = 1/1000))+
+#scale_y_continuous(trans=pseudolog10_trans, breaks=c(-10^4,-10^3,-10^2,0)) +
+  scale_color_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+
+  scale_fill_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+
+  theme_pubr(border=TRUE)+theme(legend.position="right")
+
+
+pdf("test_all_CUE.pdf", width=8, height=3)
+plot3
+dev.off() 
+
+
+
+
+
+plot3 <-ggplot(data=combined, aes(x=ea, y=CUE, fill=X, color=X))+
+                  geom_violin(scale = "count", alpha=0.5)+ 
+     scale_y_continuous(limits=c(0,0.8))+
+  scale_fill_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+
+  scale_color_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+
+  theme_pubr(border=TRUE)+theme(legend.position="right")
+plot3
+
+pdf("acid_CUE_violin.pdf", width=7, height=2.8)
+plot3
+dev.off() 
+
+
+```
+
+

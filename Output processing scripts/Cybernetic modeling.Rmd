@@ -1,0 +1,738 @@
+---
+title: "Graphing"
+author: "Jianqiu Zheng"
+date: "2/21/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(ggpubr)
+library(MASS) # to access Animals data sets
+library(scales) # to access break formatting functions
+library(ggallin)
+library(dplyr)
+theme_pubclean()
+```
+
+
+##putting delGd into 10 bins
+#mineral soil
+```{R energy}
+
+soil<-read.csv("corr_min_oxy_ctrl.csv")
+MolForm<-read.csv("mineral1.csv") 
+
+cal_ne<-4*MolForm$C+MolForm$H-3*MolForm$N-2*MolForm$O+5*MolForm$P-2*MolForm$S  ##CHNOPS
+
+soil$ne<-cal_ne
+
+#testing histogram return function
+bins<-hist(soil$delGd, breaks=10)
+bins$breaks
+
+
+test1<- soil %>% filter(delGd < -3400)
+bin1<- unlist(lapply(test1, mean))
+v1<-as.data.frame(matrix(data=bin1, nrow=1))
+colnames(v1)<-colnames(soil)
+v1$abd<-nrow(test1)/nrow(soil)
+
+test2<- soil %>% filter(delGd < -3200 & delGd > -3400)
+bin2<- unlist(lapply(test2, mean))
+v2<-as.data.frame(matrix(data=bin2, nrow=1))
+colnames(v2)<-colnames(soil)
+v2$abd<-nrow(test2)/nrow(soil)
+
+test3<- soil %>% filter(delGd < -3000 & delGd > -3200)
+bin3<- unlist(lapply(test3, mean))
+v3<-as.data.frame(matrix(data=bin3, nrow=1))
+colnames(v3)<-colnames(soil)
+v3$abd<-nrow(test3)/nrow(soil)
+
+test4<- soil %>% filter(delGd < -2800 & delGd > -3000)
+bin4<- unlist(lapply(test4, mean))
+v4<-as.data.frame(matrix(data=bin4, nrow=1))
+colnames(v4)<-colnames(soil)
+v4$abd<-nrow(test4)/nrow(soil)
+
+test5<- soil %>% filter(delGd < -2600 & delGd > -2800)
+bin5<- unlist(lapply(test5, mean))
+v5<-as.data.frame(matrix(data=bin5, nrow=1))
+colnames(v5)<-colnames(soil)
+v5$abd<-nrow(test5)/nrow(soil)
+
+test6<- soil %>% filter(delGd < -2400 & delGd > -2600)
+bin6<- unlist(lapply(test6, mean))
+v6<-as.data.frame(matrix(data=bin6, nrow=1))
+colnames(v6)<-colnames(soil)
+v6$abd<-nrow(test6)/nrow(soil)
+
+test7<- soil %>% filter(delGd < -2200 & delGd > -2400)
+bin7<- unlist(lapply(test7, mean))
+v7<-as.data.frame(matrix(data=bin7, nrow=1))
+colnames(v7)<-colnames(soil)
+v7$abd<-nrow(test7)/nrow(soil)
+
+
+test8<- soil %>% filter(delGd < -2000 & delGd > -2200)
+bin8<- unlist(lapply(test8, mean))
+v8<-as.data.frame(matrix(data=bin8, nrow=1))
+colnames(v8)<-colnames(soil)
+v8$abd<-nrow(test8)/nrow(soil)
+
+
+test9<- soil %>% filter(delGd < -1800 & delGd > -2000)
+bin9<- unlist(lapply(test9, mean))
+v9<-as.data.frame(matrix(data=bin9, nrow=1))
+colnames(v9)<-colnames(soil)
+v9$abd<-nrow(test9)/nrow(soil)
+
+test10<- soil %>% filter(delGd < -1600 & delGd > -1800)
+bin10<- unlist(lapply(test10, mean))
+v10<-as.data.frame(matrix(data=bin10, nrow=1))
+colnames(v10)<-colnames(soil)
+v10$abd<-nrow(test10)/nrow(soil)
+
+
+test11<- soil %>% filter(delGd < -1400 & delGd > -1600)
+bin11<- unlist(lapply(test11, mean))
+v11<-as.data.frame(matrix(data=bin11, nrow=1))
+colnames(v11)<-colnames(soil)
+v11$abd<-nrow(test11)/nrow(soil)
+
+
+test12<- soil %>% filter(delGd < -1200 & delGd > -1400)
+bin12<- unlist(lapply(test12, mean))
+v12<-as.data.frame(matrix(data=bin12, nrow=1))
+colnames(v12)<-colnames(soil)
+v12$abd<-nrow(test12)/nrow(soil)
+
+test13<- soil %>% filter(delGd < -1000 & delGd > -1200)
+bin13<- unlist(lapply(test13, mean))
+v13<-as.data.frame(matrix(data=bin13, nrow=1))
+colnames(v13)<-colnames(soil)
+v13$abd<-nrow(test13)/nrow(soil)
+
+test14<- soil %>% filter(delGd < -800 & delGd > -1000)
+bin14<- unlist(lapply(test14, mean))
+v14<-as.data.frame(matrix(data=bin14, nrow=1))
+colnames(v14)<-colnames(soil)
+v14$abd<-nrow(test14)/nrow(soil)
+
+test15<- soil %>% filter(delGd < -600 & delGd > -800)
+bin15<- unlist(lapply(test15, mean))
+v15<-as.data.frame(matrix(data=bin15, nrow=1))
+colnames(v15)<-colnames(soil)
+v15$abd<-nrow(test15)/nrow(soil)
+
+test16<- soil %>% filter(delGd < -400 & delGd > -600)
+bin16<- unlist(lapply(test16, mean))
+v16<-as.data.frame(matrix(data=bin16, nrow=1))
+colnames(v16)<-colnames(soil)
+v16$abd<-nrow(test16)/nrow(soil)
+
+test17<- soil %>% filter(delGd < -200 & delGd > -400)
+bin17<- unlist(lapply(test17, mean))
+v17<-as.data.frame(matrix(data=bin17, nrow=1))
+colnames(v17)<-colnames(soil)
+v17$abd<-nrow(test17)/nrow(soil)
+
+bins<-rbind(v1,v2,v3,v4,v5,v6,v7,v8,v9,v10,v11,v12,v13,v14,v15,v16,v17)
+
+bins$mu_oc<-exp(-abs(bins$stoichMet_donor)/(bins$abd))
+bins$mu_ea<-exp(-abs(bins$stoichMet_acceptor))
+bins$mu_all<-bins$mu_oc*bins$mu_ea
+
+test <-bins[c("delGd","delGcat","lambda", "stoichMet_donor","stoichMet_acceptor","stoichMet_hco3","CUE","abd","C_num","ne","mu_oc","mu_ea","mu_all")]
+
+test$ea<-c("Aero")
+write.csv(test,"min_OMbins_Oxy_ne.csv")
+
+```
+
+
+##putting delGd into 10 bins
+#Ass and Peat
+```{R energy}
+
+soil<-read.csv("peatCS_out_Oxy_pH.csv")
+MolForm<-read.csv("peatCS.csv") 
+
+cal_ne<-4*MolForm$C+MolForm$H-3*MolForm$N-2*MolForm$O+5*MolForm$P-2*MolForm$S  ##CHNOPS
+
+soil$ne<-cal_ne
+
+#=======testing histogram return function
+bins<-hist(soil$delGd, breaks=10)
+bins$breaks
+
+test10<- soil %>% filter(delGd < -1600 & delGd > -1800)
+bin10<- unlist(lapply(test10, mean))
+v10<-as.data.frame(matrix(data=bin10, nrow=1))
+colnames(v10)<-colnames(soil)
+v10$abd<-nrow(test10)/nrow(soil)
+
+
+test11<- soil %>% filter(delGd < -1400 & delGd > -1600)
+bin11<- unlist(lapply(test11, mean))
+v11<-as.data.frame(matrix(data=bin11, nrow=1))
+colnames(v11)<-colnames(soil)
+v11$abd<-nrow(test11)/nrow(soil)
+
+
+test12<- soil %>% filter(delGd < -1200 & delGd > -1400)
+bin12<- unlist(lapply(test12, mean))
+v12<-as.data.frame(matrix(data=bin12, nrow=1))
+colnames(v12)<-colnames(soil)
+v12$abd<-nrow(test12)/nrow(soil)
+
+test13<- soil %>% filter(delGd < -1000 & delGd > -1200)
+bin13<- unlist(lapply(test13, mean))
+v13<-as.data.frame(matrix(data=bin13, nrow=1))
+colnames(v13)<-colnames(soil)
+v13$abd<-nrow(test13)/nrow(soil)
+
+test14<- soil %>% filter(delGd < -800 & delGd > -1000)
+bin14<- unlist(lapply(test14, mean))
+v14<-as.data.frame(matrix(data=bin14, nrow=1))
+colnames(v14)<-colnames(soil)
+v14$abd<-nrow(test14)/nrow(soil)
+
+test15<- soil %>% filter(delGd < -600 & delGd > -800)
+bin15<- unlist(lapply(test15, mean))
+v15<-as.data.frame(matrix(data=bin15, nrow=1))
+colnames(v15)<-colnames(soil)
+v15$abd<-nrow(test15)/nrow(soil)
+
+test16<- soil %>% filter(delGd < -400 & delGd > -600)
+bin16<- unlist(lapply(test16, mean))
+v16<-as.data.frame(matrix(data=bin16, nrow=1))
+colnames(v16)<-colnames(soil)
+v16$abd<-nrow(test16)/nrow(soil)
+
+test17<- soil %>% filter(delGd < -200 & delGd > -400)
+bin17<- unlist(lapply(test17, mean))
+v17<-as.data.frame(matrix(data=bin17, nrow=1))
+colnames(v17)<-colnames(soil)
+v17$abd<-nrow(test17)/nrow(soil)
+
+bins<-rbind(v10,v11,v12,v13,v14,v15,v16,v17)
+
+bins$mu_oc<-exp(-abs(bins$stoichMet_donor)/(bins$abd))
+bins$mu_ea<-exp(-abs(bins$stoichMet_acceptor))
+bins$mu_all<-bins$mu_oc*bins$mu_ea
+
+test <-bins[c("delGd","delGcat","lambda", "stoichMet_donor","stoichMet_acceptor","stoichMet_hco3","CUE","abd","C_num","ne","mu_oc","mu_ea","mu_all")]
+
+test$ea<-c("Aero")
+write.csv(test,"peatCS_OMbins_Oxy_ne.csv")
+
+```
+
+##calculating the mean and median value of delG for each soil 
+
+```{r stats}
+
+soil<-read.csv("peatM_out_Oxy_pH.csv")
+MolForm<-read.csv("mineral1.csv") 
+
+cal_ne<-4*MolForm$C+MolForm$H-3*MolForm$N-2*MolForm$O+5*MolForm$P-2*MolForm$S  ##CHNOPS
+
+soil$ne<-cal_ne
+
+#testing histogram return function
+bins<-hist(soil$C_num, breaks=10)
+bins$breaks
+
+a <- mean(soil$delGd)
+b <- median(soil$delGd)
+c<- mean(soil$lambda)
+d<-median(soil$lambda)
+e<-mean(soil$C_num)
+f<-median(soil$C_num)
+list(a,b,c,d,e,f)
+
+
+```
+
+
+
+##cybernetic
+```{R energy}
+
+#library(MASS) # to access Animals data sets
+#library(scales) # to access break formatting functions
+#library(ggplot2)
+#library(ggallin)
+#library(dplyr)
+
+data_oxy<-read.csv("minCS_OMbins_Oxy_ne.csv")
+data_fe<-read.csv("minCS_OMbins_Fe_ne.csv")
+data_s<-read.csv("minCS_OMbins_S_ne.csv")
+data_me<-read.csv("minCS_OMbins_CH4_ne.csv")
+data_oxy$ea<-c("Oxy")
+data_fe$ea<-c("Fe")
+data_s$ea<-c("S")
+data_me$ea<-c("Me")
+
+data_ea<-rbind(data_oxy,data_fe, data_s, data_me)
+
+sumoc<-sum(data_ea$mu_oc, na.rm=TRUE)
+sumea<-sum(data_ea$mu_ea, na.rm=TRUE)
+sumall<-sum(data_ea$mu_all, na.rm=TRUE)
+
+data_ea$voc<-(data_ea$mu_oc)^2/sumoc
+data_ea$vea<-(data_ea$mu_ea)^2/sumea
+data_ea$vall<-(data_ea$mu_all)^2/sumall
+
+data_ea$oc_acc<- abs(data_ea$voc*data_ea$stoichMet_acceptor)
+data_ea$ea_acc<- abs(data_ea$vea*data_ea$stoichMet_acceptor)
+data_ea$all_acc<- abs(data_ea$vall*data_ea$stoichMet_acceptor)
+
+data_ea$oc_IC<-abs(data_ea$voc*data_ea$stoichMet_hco3)
+data_ea$ea_IC<-abs(data_ea$vea*data_ea$stoichMet_hco3)
+data_ea$all_IC<-abs(data_ea$vall*data_ea$stoichMet_hco3)
+  
+test<-data_ea[complete.cases(data_ea), ]
+
+cyb1<-filter(test, ea =="Oxy")
+out1<- colSums(cyb1[sapply(cyb1, is.numeric)] )
+out1$ea<-c("Oxy")
+
+
+cyb2<-filter(test, ea =="Fe")
+out2<- colSums(cyb2[sapply(cyb2, is.numeric)] )
+out2$ea<-c("Fe")
+
+
+cyb3<-filter(test, ea =="S")
+out3<- colSums(cyb3[sapply(cyb3, is.numeric)] )
+out3$ea<-c("S")
+
+
+cyb4<-filter(test, ea =="Me")
+out4<- colSums(cyb4[sapply(cyb4, is.numeric)] )
+out4$ea<-c("Me")
+
+allea<-rbind(out1,out2, out3, out4)
+write.csv(allea, "minCS_cyb_ne.csv")
+
+```
+
+
+
+
+###rate prediction with soil concentrations
+```{R energy}
+
+data_oxy<-read.csv("minM_OMbins_Oxy_ne.csv")
+data_fe<-read.csv("minM_OMbins_Fe_ne.csv")
+data_s<-read.csv("minM_OMbins_S_ne.csv")
+data_me<-read.csv("minM_OMbins_CH4_ne.csv")
+data_oxy$ea<-c("Oxy")
+data_fe$ea<-c("Fe")
+data_s$ea<-c("S")
+data_me$ea<-c("Me")
+
+data_oxy$mu_ea<-exp(-abs(data_oxy$stoichMet_acceptor)/1.2) ##vh[ea]=1
+data_fe$mu_ea<-exp(-abs(data_fe$stoichMet_acceptor)/1.06)
+data_s$mu_ea<-exp(-abs(data_s$stoichMet_acceptor)/0.33)
+data_me$mu_ea<-exp(-abs(data_me$stoichMet_acceptor)/0.2)
+
+data_ea<-rbind(data_oxy,data_fe, data_s, data_me)
+
+data_ea$mu_oc<-exp(-abs(data_ea$stoichMet_donor)/(data_ea$abd*7)) ##vh=1, [OC]=measured
+#data_ea$mu_ea<-exp(-abs(data_ea$stoichMet_acceptor)/(1)) ##vh[OC]=1
+data_ea$mu_all<-data_ea$mu_ea*data_ea$mu_oc ##vh[OC]=1
+
+#----------
+data_ea$mu_max<-3/(data_ea$ne/data_ea$C_num) ### Ne based umax calculation
+data_ea$mu_sum1<-data_ea$mu_oc*data_ea$mu_max #mu_max*exp(OC)
+data_ea$mu_sum2<-data_ea$mu_ea*data_ea$mu_max #mu_max*exp(EA)
+data_ea$mu_sum3<-data_ea$mu_all*data_ea$mu_max#mu_max*exp(OC)*exp(EA)
+
+sumoc<-sum(data_ea$mu_oc, na.rm=TRUE)#exp(OC)
+sumea<-sum(data_ea$mu_ea, na.rm=TRUE)#exp(EA)
+sumall<-sum(data_ea$mu_all, na.rm=TRUE)#exp(OC)*exp(EA)
+summax<-sum(data_ea$mu_max, na.rm=TRUE)#mu_max
+sum1<-sum(data_ea$mu_sum1, na.rm=TRUE)#mu_max*exp(OC)
+sum2<-sum(data_ea$mu_sum2, na.rm=TRUE)#mu_max*exp(EA)
+sum3<-sum(data_ea$mu_sum3, na.rm=TRUE) #mu_max*exp(OC)*exp(EA)
+
+
+data_ea$cyoc<-(data_ea$mu_oc)/sumoc  ##cybernetic variables
+data_ea$cyea<-(data_ea$mu_ea)/sumea
+data_ea$cyall<-(data_ea$mu_all)/sumall
+data_ea$cymax<-(data_ea$mu_max)/summax
+data_ea$cys1<-(data_ea$mu_sum1)/sum1
+data_ea$cys2<-(data_ea$mu_sum2)/sum2
+data_ea$cys3<-(data_ea$mu_sum3)/sum3
+
+
+data_ea$voc<-(data_ea$mu_oc)^2/sumoc  ##cybernetic variables
+data_ea$vea<-(data_ea$mu_ea)^2/sumea
+data_ea$vall<-(data_ea$mu_all)^2/sumall
+data_ea$vmax<-(data_ea$mu_max)^2/summax
+data_ea$vs1<-(data_ea$mu_sum1)^2/sum1
+data_ea$vs2<-(data_ea$mu_sum2)^2/sum2
+data_ea$vs3<-(data_ea$mu_sum3)^2/sum3
+
+#rate of electron acceptors
+data_ea$sum1_acc<- abs(data_ea$vs1*data_ea$stoichMet_acceptor)
+data_ea$sum2_acc<- abs(data_ea$vs2*data_ea$stoichMet_acceptor)
+data_ea$sum3_acc<- abs(data_ea$vs3*data_ea$stoichMet_acceptor)
+
+
+#rate of CO2 production
+data_ea$sum1_IC<-abs(data_ea$vs1*data_ea$stoichMet_hco3)
+data_ea$sum2_IC<-abs(data_ea$vs2*data_ea$stoichMet_hco3)
+data_ea$sum3_IC<-abs(data_ea$vs3*data_ea$stoichMet_hco3)
+
+test<-data_ea[complete.cases(data_ea), ]
+#------
+cyb1<-filter(test, ea =="Oxy")
+out1<- colSums(cyb1[sapply(cyb1, is.numeric)] )
+out1$ea<-c("Oxy")
+
+
+cyb2<-filter(test, ea =="Fe")
+out2<- colSums(cyb2[sapply(cyb2, is.numeric)] )
+out2$ea<-c("Fe")
+
+
+cyb3<-filter(test, ea =="S")
+out3<- colSums(cyb3[sapply(cyb3, is.numeric)] )
+out3$ea<-c("S")
+
+
+cyb4<-filter(test, ea =="Me")
+out4<- colSums(cyb4[sapply(cyb4, is.numeric)] )
+out4$ea<-c("Me")
+#------
+allea<-rbind(out1,out2, out3, out4)
+
+final<-allea[,c("sum1_acc","sum2_acc","sum3_acc","sum1_IC","sum2_IC","sum3_IC","ea")]
+write.csv(final, "minM_cyb_vh0.1.csv")
+
+
+
+```
+
+
+
+###rate prediction with mean stochiometry
+
+```{R energy}
+
+data_oxy<-read.csv("peatM_OMbins_Oxy.csv")
+data_fe<-read.csv("peatM_OMbins_Fe.csv")
+data_s<-read.csv("peatM_OMbins_S.csv")
+data_me<-read.csv("peatM_OMbins_CH4.csv")
+
+datasum<-data.frame(matrix(ncol=7, nrow=4))
+colnames(datasum)<-c("soil","ea","stoichMet_donor", "stoichMet_acc","stoichMet_hco3","mu_oc","mu_ea")
+datasum$soil<-c("ass")
+datasum$ea<-c("Aero","Fe","S","xMe")
+
+datasum$stoichMet_donor[1]<-mean(data_oxy$stoichMet_donor, na.rm=TRUE)
+datasum$stoichMet_donor[2]<-mean(data_fe$stoichMet_donor, na.rm=TRUE)
+datasum$stoichMet_donor[3]<-mean(data_s$stoichMet_donor, na.rm=TRUE)
+datasum$stoichMet_donor[4]<-mean(data_me$stoichMet_donor, na.rm=TRUE)
+
+datasum$stoichMet_acc[1]<-mean(data_oxy$stoichMet_acceptor, na.rm=TRUE)
+datasum$stoichMet_acc[2]<-mean(data_fe$stoichMet_acceptor, na.rm=TRUE)
+datasum$stoichMet_acc[3]<-mean(data_s$stoichMet_acceptor, na.rm=TRUE)
+datasum$stoichMet_acc[4]<-mean(data_me$stoichMet_acceptor, na.rm=TRUE)
+
+datasum$stoichMet_hco3[1]<-mean(data_oxy$stoichMet_hco3, na.rm=TRUE)
+datasum$stoichMet_hco3[2]<-mean(data_fe$stoichMet_hco3, na.rm=TRUE)
+datasum$stoichMet_hco3[3]<-mean(data_s$stoichMet_hco3, na.rm=TRUE)
+datasum$stoichMet_hco3[4]<-mean(data_me$stoichMet_hco3, na.rm=TRUE)
+
+datasum$s_oc<-55
+datasum$s_ea<-c(12,3.5,1.35,2)
+###rate calculation
+datasum$mu_oc<- exp(-abs(datasum$stoichMet_donor)/datasum$s_oc)
+datasum$mu_ea<- exp(-abs(datasum$stoichMet_acc)/datasum$s_ea)
+datasum$mu_all<-datasum$mu_ea*datasum$mu_oc ##vh[OC]=1
+
+
+sumoc<-sum(datasum$mu_oc, na.rm=TRUE)
+sumea<-sum(datasum$mu_ea, na.rm=TRUE)
+sumall<-sum(datasum$mu_all, na.rm=TRUE)
+
+datasum$voc<-(datasum$mu_oc)^2/sumoc  ##cybernetic variables
+datasum$vea<-(datasum$mu_ea)^2/sumea
+datasum$vall<-(datasum$mu_all)^2/sumall
+
+datasum$oc_acc<- abs(datasum$voc*datasum$stoichMet_acc)
+datasum$ea_acc<- abs(datasum$vea*datasum$stoichMet_acc)
+datasum$all_acc<- abs(datasum$vall*datasum$stoichMet_acc)
+
+datasum$oc_IC<-abs(datasum$voc*datasum$stoichMet_hco3)
+datasum$ea_IC<-abs(datasum$vea*datasum$stoichMet_hco3)
+datasum$all_IC<-abs(datasum$vall*datasum$stoichMet_hco3)
+
+write.csv(datasum, "peatM_cyb_mean_vh0.1.csv")
+
+```
+
+
+
+
+###plotting
+```{R energy}
+
+library(MASS) # to access Animals data sets
+library(scales) # to access break formatting functions
+library(ggplot2)
+library(ggallin)
+library(dplyr)
+
+datafile<-read.csv("rate_vh0.1_new.csv")
+
+datafile$obv<-datafile$obv/5  #rate per day
+com1<-cor.test(datafile$obv, datafile$max_both, method=c("pearson"))
+datafile$rs_oc<-rescale(datafile$max_oc, to=c(0,1))
+datafile$rs_ea<-rescale(datafile$max_ea, to=c(0,1))
+datafile$rs_both<-rescale(datafile$max_both, to=c(0,1))
+
+datafile$scen<-c("lim")
+
+#------------------------------
+#doing soil/trt subplots
+scaleFUN <- function(x) sprintf("%.1f", x)
+
+#scatter plot
+plot1<-ggplot(data=datafile, aes(x=obv, y=max_both, color=soil))+ 
+  geom_point(aes(color=soil),shape=1,stroke=1,size=2)+
+  stat_cor(method = "pearson",r.accuracy=0.01,p.accuracy = 0.01, label.x.npc = 0.2, label.y.npc=0.99, digits=2)+
+  #geom_line(aes(linetype=trt),size=0.5,color="#868686FF")+
+  scale_x_continuous(limits=c(0,6))+
+  scale_y_continuous(labels=scaleFUN)+
+  facet_grid(~acceptor)+
+  scale_fill_manual(values = c("#E7B800", "#0073C2FF","#FC4E07","#00AFBB")) +
+  scale_color_manual(values = c("#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+
+  theme_pubr(border=TRUE)+theme(legend.position="none")+theme(axis.title.x=element_blank(),axis.title.y=element_blank())+theme(strip.text=element_text(size=18, face="bold"))
+plot1
+
+## blue, red, yellow:  "#0073C2FF", "#FC4E07","#E7B800"
+pdf("Rate_noconc_oc_rescaled.pdf", width=3.6, height=3.2)
+plot1
+dev.off() 
+
+#------------------------------
+#doing redox pathway
+
+
+datafile$lab<-c("all")
+trtlab<-c('all'=" ")
+
+plot1<-ggplot(data=datafile, aes(x=obv, y=rs_both, color=acceptor))+ 
+  geom_point(aes(color=acceptor),shape=1,stroke=1,size=2)+ 
+  stat_cor(method = "pearson",p.accuracy = 0.01, label.x.npc = 0.6, label.y.npc=0.45, size=3)+
+  #scale_x_continuous(limits=c(-1,5))+
+  scale_y_continuous(labels=scaleFUN, breaks=c(0,0.5,1), limits=c(0,1))+
+  facet_grid(~lab, labeller=as_labeller(trtlab))+
+  scale_fill_manual(values = c("#868686FF","#E7B800", "#0073C2FF","#FC4E07","#00AFBB")) +
+  scale_color_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+
+  theme_pubr(border=TRUE)+theme(legend.position="none")+theme(axis.title.x=element_blank(),axis.title.y=element_blank())+theme(strip.text=element_text(size=14, face="bold"))+theme(text=element_text(size=12))
+plot1
+
+## blue, red, yellow:  "#0073C2FF", "#FC4E07","#E7B800"
+pdf("summary rate_0.1_both.pdf", width=3.3, height=3)
+plot1
+dev.off() 
+
+#####individual soils
+sub<-filter(datafile, soil=="Ass")
+plot1<-ggplot(data=sub, aes(x=obv, y=max_both, color=acceptor))+ 
+  geom_point(aes(color=acceptor),shape=1,stroke=1,size=2)+ 
+  stat_cor(method = "pearson",p.accuracy = 0.01, label.x.npc = 0.6, label.y.npc=0.25)+
+  #scale_x_continuous(limits=c(-1,5))+
+  #scale_y_continuous(labels=scaleFUN, breaks=c(0,0.5,1), limits=c(0,1))+
+  #facet_grid(~soil, labeller=as_labeller(trtlab))+
+  scale_fill_manual(values = c("#868686FF","#E7B800", "#0073C2FF","#FC4E07","#00AFBB")) +
+  scale_color_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+
+  theme_pubr(border=TRUE)+theme(legend.position="none")+theme(axis.title.x=element_blank(),axis.title.y=element_blank())+theme(strip.text=element_text(size=14, face="bold"))
+plot1
+
+## blue, red, yellow:  "#0073C2FF", "#FC4E07","#E7B800"
+pdf("summary rate.pdf", width=4.2, height=4)
+plot1
+dev.off() 
+
+
+
+
+statfile<-read.csv("rate_pred_cor.csv")
+##by soil
+ass<-filter(statfile, soil=="Ass")
+datap<-reshape2::melt(ass, id.var=c("soil","trt"))
+
+library(dplyr)
+df_sum1 <- datafile %>%
+  group_by(soil, trt) %>%
+  summarise(r=cor(Obv, Blim))
+df_sum1
+df_sum1$lim<-c("Both")
+corrdata<-data.frame
+corrdata<-df_sum1
+corrdata$lim<-c("OC")
+corrdata<-rbind(corrdata, df_sum1)
+write.csv(corrdata, "pred_corr_coeff.csv")
+
+
+pred<-filter(corrdata, lim=="OC")
+
+#bar plot
+plot3 <-ggplot(data=pred, aes(x=soil, y=r,  fill=trt, color=trt))+ 
+  geom_col(position= position_dodge(0.7),width=0.7, alpha=0.4) + 
+  scale_y_continuous(limits=c(0,1))+
+#scale_y_continuous(trans=pseudolog10_trans, breaks=c(-10^4,-10^3,-10^2,0)) +
+  scale_color_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+
+  scale_fill_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+
+  theme_pubr(border=TRUE)+theme(legend.position="right")
+
+## blue, red, yellow:  "#0073C2FF", "#FC4E07","#E7B800"
+plot3
+pdf("soil_oclim.pdf", width=5.5, height=2.6)
+plot3
+dev.off() 
+
+
+```
+
+##comparing
+
+```{r vh}
+
+datafile<-read.csv("rate_pred_ne.csv")
+sensfile<-read.csv("rate_pred_ne_Vh0.2OC.csv")
+sens2<-read.csv("rate_pred_ne_Vh0.2.csv")
+
+com1<-cor.test(datafile$max_both, sensfile$max_both, method=c("pearson"))
+
+test<-data.frame(datafile$both, sensfile$both)
+colnames(test)<-c('ref','sen')
+test$trt<-c('both')
+
+
+test2<-data.frame(datafile$max_both, sensfile$max_both)
+colnames(test2)<-c('ref','sen')
+test2$trt<-c('max_both')
+
+
+test3<-data.frame(datafile$both, sens2$both)
+colnames(test3)<-c('ref','sen')
+test3$trt<-c('both2')
+
+
+test4<-data.frame(datafile$max_both, sens2$max_both)
+colnames(test4)<-c('ref','sen')
+test4$trt<-c('max_both2')
+
+
+new<-rbind(test, test2, test3, test4)
+
+scaleFUN <- function(x) sprintf("%.1f", x)
+trtlab<-c('lim'="  ")
+#scatter plot
+plot1<-ggplot(data=new, aes(x=ref, y=sen, color=trt))+ 
+  geom_point(aes(color=trt),shape=1,stroke=1,size=2)+
+  geom_abline(slope=1,intercept=0)+
+  scale_x_continuous(limits=c(0,2))+
+  scale_y_continuous(limits=c(0,2))+
+  #facet_grid(~scen, labeller=as_labeller(trtlab))+
+  scale_fill_manual(values = c("#868686FF","#E7B800", "#0073C2FF","#FC4E07","#00AFBB")) +
+  scale_color_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+
+  theme_pubr(border=TRUE)+theme(legend.position="none")+theme(axis.title.x=element_blank(),axis.title.y=element_blank())+theme(strip.text=element_text(size=14, face="bold"))
+plot1
+
+```
+
+
+
+###bar graphing
+```{r bargraph}
+datafile<-read.csv("rate_pred_decom.csv")
+
+
+scaleFUN <- function(x) sprintf("%.1f", x)
+trtlab<-c('Ass'="Acidic",'Min'="Mineral",'Peat'="Peaty")
+#scatter plot
+plot1<-ggplot(data=datafile, aes(x=trt, y=EAlim, fill=ea))+ 
+  geom_col(alpha=0.5)+
+  #geom_line(aes(linetype=trt),size=0.5,color="#868686FF")+
+  #scale_x_continuous(limits=c(-1,5))+
+  facet_grid(~soil, labeller=as_labeller(trtlab))+
+  scale_fill_manual(values = c("#868686FF","#E7B800", "#0073C2FF","#FC4E07","#00AFBB")) +
+  scale_color_manual(values = c("#868686FF","#E7B800","#0073C2FF", "#FC4E07","#00AFBB"))+
+  theme_pubr(border=TRUE)+theme(legend.position="right")+theme(strip.text=element_text(size=14, face="bold"))
+plot1
+
+## blue, red, yellow:  "#0073C2FF", "#FC4E07","#E7B800"
+pdf("decom_Blim.pdf", width=9, height=3)
+plot1
+dev.off() 
+```
+
+
+
+##Kinetic modeling
+```{R energy}
+
+Thermo1<-read.csv("mineral_OMbins.csv")
+
+library(FME)
+
+pars<-Thermo1
+
+solveKIN <- function(pars, times){
+  derivs <- function(t, state, pars){
+      with(as.list(c(state, pars)),{
+      rate<- rep(0,9)
+      R_OC<-rep(0,9)
+       R_Oxy<-rep(0,9)
+        R_IC<-rep(0,9)
+      yoc<-pars$stoichMet_donor
+      yea<-pars$stoichMet_acceptor
+      yic<-pars$stoichMet_hco3
+      abd<-pars$abd
+      for (i in 1:9) rate[i]<-(exp(-abs(yoc[i]/abd[i])))*(exp(-abs(yea[i])))
+      rsum<-sum(rate)
+      for (i in 1:9) R_OC[i]<-rate[i]/rsum*rate[i]*yoc[i]
+      for (i in 1:9) R_Oxy[i]<-rate[i]/rsum*rate[i]*yea[i]
+      for (i in 1:9) R_IC[i]<-rate[i]/rsum*rate[i]*yic[i]
+      
+      RsumOC<-sum(R_OC)
+        RsumOxy<-sum(R_Oxy)
+        RsumIC<-sum(R_IC)
+
+      dOC <- RsumOC*BM
+      dOxy <- RsumOxy*Oxy
+      dIC <- RsumIC*IC
+      dBM<- rsum*BM-0.1*BM^2
+ 
+    return(list(c(dOC, dOxy, dIC, dBM)))
+      })
+  }
+times=seq(0,120, by=0.05)
+state<-c(OC=100, Oxy=12,  IC=0.001, BM=0.01)
+#solved the mode
+  ox<-ode(y=state, times=times, func=derivs, parms=pars)
+
+data.frame(ox[,1:5])
+}
+
+output<-solveKIN(pars)  
+
+
+plot(output$time,output$OC, type = "l", main="BatchA",xlab = "Time (h)", ylab = "Concentration (uM)", lwd=3,lty=1,col="#7f3b08", xlim=c(0,100), ylim=c(0,100))
+lines(output$time,output$Oxy, lwd=3, lty=1, col="#e08214")
+lines(output$time,output$IC, lwd=3, lty=1, col="#542788")
+lines(output$time,output$BM, lwd=3, lty=2, col="black")
+legend("topright", c("OC","Oxy","IC","BM"),lwd=3, lty=c(1,1,1,2), col=c("#7f3b08","#e08214","#542788","black"))
+
+```

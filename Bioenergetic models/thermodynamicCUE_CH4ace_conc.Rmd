@@ -1,0 +1,237 @@
+---
+title: "thermodynamicCUE"
+author: "Jianqiu Zheng"
+date: "1/27/2021"
+output: html_document
+---
+
+##creating OM composition matrix
+```{r composition}
+library(tidyverse)
+
+CHEMICAL_ELEMENTS = c("C","H","N","O","P","S")
+# extract chemical compositions from the table
+get_compositions <- function(df) {
+  chemical_compositions <- NULL
+  formulas <- NULL
+  if ("C" %in% colnames(df)) {
+    tdf <- df %>% 
+      filter(C > 0)
+    if ("C13" %in% colnames(df)) {
+      tdf <- tdf %>% 
+        filter(C13 == 0)
+    }
+    chemical_compositions <- as.matrix(tdf[CHEMICAL_ELEMENTS])
+    formulas <- tdf$MolForm
+  } 
+  
+  if ("Z" %in% colnames(df)) {
+    chemical_compositions <- cbind(chemical_compositions, "Z"=df$Z)
+  } else {
+    chemical_compositions <- cbind(chemical_compositions, "Z"=0)
+  }
+  
+  list("chemical_compositions" = chemical_compositions)
+}
+
+```
+
+
+##Thermodynamic calculations
+##For iron
+```{r lamda}
+# compute thermodynamic properties and lambda values
+getThermoStoich <- function(chemForm) {
+  a <- chemForm[1]
+  b <- chemForm[2]
+  c <- chemForm[3]
+  d <- chemForm[4]
+  e <- chemForm[5]
+  f <- chemForm[6]
+  z <- chemForm[7]
+
+  #---------  
+# stoichD: stoichiometries for an electron donor
+  ySource <- -1
+  yH2o <- -(3*a+4*e-d)
+  yHco3 <- a
+  yNh4 <- c
+  yHpo4 <- e
+  yHs <- f
+  yH <- 5*a+b-4*c-2*d+7*e-f
+  yE <- -z+4*a+b-3*c-2*d+5*e-2*f
+  stoichD <- c(ySource,yH2o,yHco3,yNh4,yHpo4,yHs,yH,yE)
+  stoichD[c(9,10,11)] <- 0 # add additional components: e-acceptor and biomass
+  
+# stoichA: stoichiometries for e acceptor
+  stoichA <- rep(0, 11)
+
+  stoichA[2] <- 4  #  h2o
+  stoichA[7] <- -8  #  h+
+  stoichA[8] <- -8  #  e-
+  stoichA[9] <- -1  # Acetate
+  stoichA[10] <- 2  # CH4
+  
+# stoichCat: stoichiometries for catabolic reaciton 
+  yEd <- stoichD[8]
+  yEa <- stoichA[8]
+  stoichCat <- stoichD-(yEd/yEa)*stoichA
+  
+#  stoichAnStar: stoichiometries for anabolic reaciton  (N source = NH4+)
+  chemFormBiom <- c(1, 1.8, 0.2, 0.5, 0, 0, 0)  # C H_1.8 N_0.2 O_0.5
+  aB <- chemFormBiom[1]
+  bB <- chemFormBiom[2]
+  cB <- chemFormBiom[3]
+  dB <- chemFormBiom[4]
+  eB <- chemFormBiom[5]
+  fB <- chemFormBiom[6]
+  zB <- chemFormBiom[7]
+  
+  ySource <- -1
+  yH2o <- -(3*aB+4*eB-dB)
+  yHco3 <- aB
+  yNh4 <- cB
+  yHpo4 <- eB
+  yHs <- fB
+  yH <- 5*aB+bB-4*cB-2*dB+7*eB-fB
+  yE <- -zB+4*aB+bB-3*cB-2*dB+5*eB-2*fB
+  stoichAnStarB <- c(ySource,yH2o,yHco3,yNh4,yHpo4,yHs,yH,yE)
+  stoichAnStarB[c(9,10,11)] <- 0  # add additional components: e-acceptor and biomass
+  stoichAnStarB <- -stoichAnStarB  ##stoichi for biosynthesis (as opposite to biomass oxidation)
+  stoichAnStarB[11] <- stoichAnStarB[1] # change the location of biomass in the vector
+  stoichAnStarB[1] <- 0
+  
+  # Step 2b) "overall" anabolic reaction
+  stoichAnStar <- stoichAnStarB+(1/a)*stoichD
+  yEana <- stoichAnStar[8]  #stoichi coeff for e of anabolism, it could be negative
+  if (yEana > 0){
+    stoichAn <- stoichAnStar-yEana/yEa*stoichA #require e acceptor
+  } else if (yEana < 0){#e required for biosynthesis, c source is more reduced than the biomass
+     stoichAn <- stoichAnStar-yEana/yEd*stoichD #required e donor
+  } else{
+       stoichAn <- stoichAnStar
+       }
+  
+  # Energy balance
+  
+  # Calculate delGd0 for OC using LaRowe and Van Cappellen (2011)
+  ne <- -z+4*a+b-3*c-2*d+5*e-2*f  # number of electrons transferred in D 
+  nosc <- -ne/a+4  # nominal oxidataion state of carbon 
+  delGcox0 <- 60.3-28.5*nosc  # kJ/C-mol at 25 degC and 1 bar
+  delGd0 <- delGcox0*a*abs(stoichD[1])  # energy of Rd half reaction kJ/rxn 
+  
+#_____________________  
+  # free energy of OC
+  delGf0_D_zero <- 0
+  # delGf0_zero <- c(delGf0_D_zero, -237.2, -586.8, -79.4, -1096.1, 12.1, 0, 0, 16.4, -67)
+  delGf0_zero <- c(delGf0_D_zero, -237.2, -586.9, -79.37, -1089.1,12.05, 0, 0, -392,-34.06, -67) #methanogenesis
+  delGcox0_zero <- drop(delGf0_zero %*% stoichD) #energy of Rd half reaction withou counting OC
+  delGf0_D_est <- (delGd0-delGcox0_zero)/stoichD[1] #estimated energy of OC (x*stoiD+delGcox0_zero=delGd0)
+  # delGf0 (free energy vector of Rd half reaction)
+  delGf0 <- delGf0_zero
+  delGf0[1] <- delGf0_D_est
+#---------------------------
+
+  # standard delG at pH=0, 25 degC and 1 bar
+  delGcat0 <- drop(delGf0 %*% stoichCat)
+  delGan0 <- drop(delGf0 %*% stoichAn)
+  
+  # - stadard delG at pH=7
+  R <- 0.008314  # kJ/(K.mol)
+  T <- 298.15  # K
+  Q<-0
+  Q<-0.0133^stoichCat[1]*0.001^stoichCat[3]*0.000001^stoichCat[4]*0.000001^stoichCat[5]*0.000001^stoichCat[6]*0.0005^stoichCat[9]
+  
+  
+  iProton <- 7  # [eD,h2o,hco3-,nh4+,hpo4^2-,hs-,h+,e-,eA,biom]
+  delGd <- delGd0+R*T*stoichD[iProton]*log(10^(-7)) ##e donor half reaction
+  delGcox <- delGd / a
+  delGcat <- delGcat0+R*T*stoichCat[iProton]*log(10^(-7))+R*T*log(Q)
+  delGan <- delGan0+R*T*stoichAn[iProton]*log(10^(-7))
+  
+  # The Thermodynamic Electron Equivalents Model (TEEM)
+  # --------
+  eta <- 0.43
+  delGsyn <- 200  # kJ/(mol.Biom)
+  if (is.nan(delGan0) & is.nan(delGan)) {
+    lambda0 <- NaN
+    lambda <- NaN
+    stoichMet <- array(NaN, dim=length(stoichCat))
+    delGdis0 <- NaN
+    delGdis <- NaN
+  } else {
+    if (delGan < 0){
+      m <- 1
+    } else {
+      m <- -1}
+    
+    lambda0 <- (delGan0*eta^(-m)+delGsyn)/(-delGcat0*eta)  # assume delGsyn0=delGsyn
+    lambda <- (delGan*eta^m+delGsyn)/(-delGcat*eta)
+    
+    if (lambda > 0) {
+      stoichMet <- lambda*stoichCat+stoichAn
+   } else {
+      stoichMet <- stoichAn }
+    
+    delGdis0 <- drop(delGf0 %*% stoichMet)
+    delGdis <- delGdis0 + R*T*stoichMet[iProton]*log(10^(-7))
+    
+    delGdis0 <- -delGdis0
+    delGdis <- -delGdis
+  }
+  
+  c(delGcox,delGd,delGcat,delGan,delGdis,lambda,
+    stoichCat,stoichAn,stoichMet)
+}
+
+# compute in batch
+get_lambda <- function(formula_matrix) {
+  nrows = nrow(formula_matrix)
+  nrows=nrow(info$chemical_compositions)
+  lambda_rst <- array(0, dim=c(nrows, 39))
+  for(i in 1:nrows) {
+    lambda_rst[i,] <- getThermoStoich(formula_matrix[i,])
+  }
+  lambda_rst
+}
+```
+
+
+
+```{r load}
+# user parameters ------------------------------------------------------
+
+outfile <- "corr_min_me_M.csv"
+fticr_data <- read_csv("mineralM.csv")
+
+
+
+# main run -------------------------------------------------------------
+
+info <- get_compositions(fticr_data)
+out <- get_lambda(info$chemical_compositions)
+
+# build data frame
+df <- as.data.frame(out)
+
+# build col names
+names <- rep("", 39)
+
+names[1:6] <- c("delGcox","delGd","delGcat","delGan","delGdis","lambda")
+
+stoich_colnames <- c("donor","h2o","hco3","nh4","hpo4","hs","h","e","acceptor","biom")
+stoich_types <- c("stoichCat","stoichAn","stoichMet")
+
+for (i in 1:length(stoich_types)) {
+  names[((i-1)*11+7):(i*11+6)] <- array(sapply(stoich_types[i], paste, stoich_colnames, sep="_"))
+}
+colnames(df) <- names
+df['C_num'] <- info$chemical_compositions[,1]
+df['CUE'] <- 1/(-df$stoichMet_donor*df$C_num)
+
+
+write.csv(df, file = outfile, row.names=FALSE)
+```
+
+
+
