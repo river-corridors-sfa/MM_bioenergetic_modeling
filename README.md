@@ -1,7 +1,7 @@
 # bioenergetic_modeling
 This repository is the modeling archive in support of a River Corridor SFA publication "Thermodynamic control on the decomposition of organic matter across different electron acceptors".  All scripts are in R.
 **Schematic diagram of bioenergetic model framework**
-
+![alt text]([https://github.com/[username]/[reponame]/blob/[branch]/image.jpg?raw=true](https://github.com/jianqiuz/bioenergetic_modeling/blob/main/Schematic%20figure.png)
 
 Bioenergetic models: scripts to calculate free energy change of reactions and energy efficiency across different electron acceptors
 
