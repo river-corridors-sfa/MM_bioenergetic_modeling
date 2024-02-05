@@ -66,8 +66,8 @@ getThermoStoich <- function(chemForm) {
 # stoichA: stoichiometries for e acceptor
   stoichA <- rep(0, 11)
 
-  stoichA[2] <- 4  #  h2o
-  stoichA[7] <- -8  #  h+
+  stoichA[2] <- 2  #  h2o
+  stoichA[7] <- -9  #  h+
   stoichA[8] <- -8  #  e-
   stoichA[9] <- -1  # Acetate
   stoichA[10] <- 2  # CH4

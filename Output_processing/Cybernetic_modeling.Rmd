@@ -1,5 +1,5 @@
 ---
-title: "Graphing"
+title: "Cybernetic modeling"
 author: "Jianqiu Zheng"
 date: "2/21/2022"
 output: html_document
@@ -16,7 +16,7 @@ theme_pubclean()
 ```
 
 
-##putting delGd into 10 bins
+##putting delGd into 10 bins for kinetic modeling
 #mineral soil
 ```{R energy}
 
