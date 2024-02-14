@@ -1,7 +1,7 @@
 ---
 title: "Graphing"
-author: "Jianqiu Zheng"
-date: "2/21/2022"
+author: "Jianqiu Zheng (jianqiu.zheng@pnnl.gov)"
+date: "updated Feb-12-2024"
 output: html_document
 ---
 
@@ -18,7 +18,7 @@ library(stringr)
 library(ggpmisc)
 theme_pubr()
 ```
-
+#The outputs of this script are not included in the model package be default
 #delG of electron donor half reaction
 ```{R edonor}
 peat<-read.csv("mineral_Oxy_ctrl.csv")

@@ -1,7 +1,7 @@
 ---
-title: "thermodynamicCUE"
-author: "Jianqiu Zheng"
-date: "1/27/2021"
+title: "thermodynamic_modeling_Fe3"
+author: "Jianqiu Zheng (jianqiu.zheng@pnnl.gov)"
+date: "updated Feb-12-2024"
 output: html_document
 ---
 
