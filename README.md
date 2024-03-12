@@ -6,6 +6,7 @@ In this research, a thermodynamic modeling framework is built to flexibly incorp
 
 
 Model: Scripts for defining and running thermodynamic calculations using Fourier-transform ion cyclotron resonance mass spectrometry (FTICR-MS) based organic matter characterization as electron donors and different electron acceptors. Briefly, from FTICR-MS identified and assigned chemical formula of OM, the free energy of OM oxidation is estimated from nominal oxidation state of carbon (NOSC). Meanwhile, both catabolic and anabolic reactions can be obtained using the general formula of OM (C_a H_b N_c O_d P_e S_f^z). Energy coupling leads to the stoichiometry of metabolic reaction. Refer to the manuscript associated with this data package for more details.
+
 Input_FTICR: FTICR based organic matter composition data, used as input of bioenergetic models (see Boye et al., 2018 Discerning microbially mediated processes during redox transitions in flooded soils using carbon and energy balances)
 
 Outputs: The outputs folder contains all the stoichiometric information from model simulations. The output-processing folder contains scripts for reaction rate calculations based on Microbial Transition State Theory, which relates the growth rate to the amount of energy available to perform cellular work.
